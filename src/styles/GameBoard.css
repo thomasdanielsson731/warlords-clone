@@ -1,0 +1,101 @@
+.game-board {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  height: 100vh;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+.game-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  border: 2px solid #444;
+  width: 200px;
+}
+
+.game-info h1 {
+  margin: 0;
+  font-size: 28px;
+  color: #ffcc00;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.turn-number {
+  font-weight: bold;
+  color: #66ff66;
+  font-size: 18px;
+}
+
+.faction-label {
+  font-weight: bold;
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.faction-label.faction-red {
+  background-color: #cc3333;
+  color: white;
+}
+
+.faction-label.faction-blue {
+  background-color: #3366cc;
+  color: white;
+}
+
+.faction-label.faction-green {
+  background-color: #33cc33;
+  color: #333;
+}
+
+.faction-label.faction-yellow {
+  background-color: #cccc33;
+  color: #333;
+}
+
+.end-turn-button {
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #ff6600, #ff9900);
+  border: 2px solid #ffaa00;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.end-turn-button:hover {
+  background: linear-gradient(135deg, #ff7722, #ffaa22);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 150, 0, 0.4);
+}
+
+.end-turn-button:active {
+  transform: scale(0.98);
+}
+
+.map-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
