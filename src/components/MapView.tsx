@@ -23,7 +23,7 @@ export default function MapView() {
 
         return (
           <div
-            key={${x}-}
+            key={`${x}-${y}`}
             onClick={() => unit && selectUnit(unit.id)}
             style={{
               width: tileSize,
