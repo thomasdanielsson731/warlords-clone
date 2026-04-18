@@ -1,9 +1,11 @@
-import { GameBoard } from './components/GameBoard'
-import './App.css'
+import MapView from './components/MapView'
 
 function App() {
   return (
-    <GameBoard />
+    <div style={{ padding: 20 }}>
+      <h1>Warlords</h1>
+      <MapView />
+    </div>
   )
 }
 

@@ -1,27 +1,9 @@
-// Game type definitions
-
-export type Faction = 'red' | 'blue' | 'green' | 'yellow';
-
-export interface Position {
-  x: number;
-  y: number;
-}
+export type Faction = 'player' | 'orcs' | 'elves' | 'bane'
 
 export interface Unit {
-  id: string;
-  faction: Faction;
-  position: Position;
-  movementRange: number;
-}
-
-export interface GameState {
-  map: {
-    width: number;
-    height: number;
-  };
-  units: Unit[];
-  currentFaction: Faction;
-  selectedUnitId: string | null;
-  highlightedTiles: Position[];
-  turnNumber: number;
+  id: string
+  faction: Faction
+  x: number
+  y: number
+  moves: number
 }
