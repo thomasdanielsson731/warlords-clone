@@ -1,17 +1,6 @@
-import MapView from './components/MapView'
+import GameBoard from './components/GameBoard'
+import './App.css'
 
 export default function App() {
-  return (
-    <div
-      style={{
-        padding: 20,
-        background: '#222',
-        minHeight: '100vh',
-        color: 'white',
-      }}
-    >
-      <h1>Warlords</h1>
-      <MapView />
-    </div>
-  )
+  return <GameBoard />
 }
