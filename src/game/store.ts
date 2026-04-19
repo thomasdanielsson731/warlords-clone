@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { Unit, Tile, Position, Faction, City, UnitType, CombatResult, Ruin, RuinResult } from './types'
 import { UNIT_TEMPLATES } from './types'
 import { getMoveCost } from './gamelogic'
-import { generateMap, createInitialUnits, getMovementRange, createInitialCities, findSpawnPosition, createUnit, resolveCombat, createInitialRuins, exploreRuin, grantXp } from './gamelogic'
+import { generateMap, createInitialUnits, getMovementRange, createInitialCities, findSpawnPosition, createUnit, resolveCombat, createInitialRuins, exploreRuin, grantXp, checkVictory, runAiTurn } from './gamelogic'
 
 const FACTIONS: Faction[] = ['player', 'orcs', 'elves', 'bane']
 
@@ -20,6 +20,7 @@ interface GameStore {
   combatResult: CombatResult | null
   ruinResult: RuinResult | null
   hoveredTile: Position | null
+  victor: Faction | null
 
   selectUnit: (id: string | null) => void
   moveUnit: (x: number, y: number) => void
@@ -45,6 +46,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   combatResult: null,
   ruinResult: null,
   hoveredTile: null,
+  victor: null,
 
   setHoveredTile: (pos) => set({ hoveredTile: pos }),
 
@@ -124,6 +126,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         selectedUnitId: null,
         movementRange: [],
         combatResult: result,
+        victor: checkVictory(updatedCities),
       })
       return
     }
@@ -190,14 +193,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   endTurn: () => {
-    const { currentFaction, turnNumber, units, cities, tiles } = get()
-    const idx = FACTIONS.indexOf(currentFaction)
-    const nextFaction = FACTIONS[(idx + 1) % FACTIONS.length]
-    const newTurn = nextFaction === FACTIONS[0] ? turnNumber + 1 : turnNumber
+    const { currentFaction, turnNumber, units, cities, tiles, ruins } = get()
 
     // Advance production for the current faction's cities and spawn units
+    // Canon: continuous production — restart with same unit type after spawning
     let newUnits = [...units]
-    const updatedCities = cities.map((c) => {
+    let updatedCities = cities.map((c) => {
       if (c.owner !== currentFaction || !c.producing) return c
       const remaining = c.turnsLeft - 1
       if (remaining <= 0) {
@@ -207,24 +208,70 @@ export const useGameStore = create<GameStore>((set, get) => ({
           const spawned = createUnit(currentFaction, c.producing, pos)
           newUnits = [...newUnits, spawned]
         }
-        return { ...c, producing: null, turnsLeft: 0 }
+        // Continuous production: restart with same unit type
+        const newTurns = UNIT_TEMPLATES[c.producing].productionTurns
+        return { ...c, turnsLeft: currentFaction === 'orcs' && c.producing === 'militia' ? 1 : newTurns }
       }
       return { ...c, turnsLeft: remaining }
     })
 
-    // Restore moves for the next faction's units
-    const finalUnits = newUnits.map((u) =>
-      u.faction === nextFaction ? { ...u, movesLeft: u.movesPerTurn } : u
+    // Determine next faction
+    const idx = FACTIONS.indexOf(currentFaction)
+    let nextIdx = (idx + 1) % FACTIONS.length
+    let nextFaction = FACTIONS[nextIdx]
+    const newTurn = nextFaction === FACTIONS[0] ? turnNumber + 1 : turnNumber
+
+    // Run AI for all non-player factions between now and next player turn
+    let aiUnits = newUnits
+    let aiCities = updatedCities
+    while (nextFaction !== 'player') {
+      // Restore moves for AI faction
+      aiUnits = aiUnits.map((u) =>
+        u.faction === nextFaction ? { ...u, movesLeft: u.movesPerTurn } : u
+      )
+
+      // AI production: advance their cities
+      aiCities = aiCities.map((c) => {
+        if (c.owner !== nextFaction || !c.producing) return c
+        const remaining = c.turnsLeft - 1
+        if (remaining <= 0) {
+          const pos = findSpawnPosition(c, aiUnits, tiles)
+          if (pos) {
+            const spawned = createUnit(nextFaction, c.producing, pos)
+            aiUnits = [...aiUnits, spawned]
+          }
+          const newTurns = UNIT_TEMPLATES[c.producing].productionTurns
+          return { ...c, turnsLeft: newTurns }
+        }
+        return { ...c, turnsLeft: remaining }
+      })
+
+      // AI moves
+      const aiResult = runAiTurn(nextFaction, aiUnits, aiCities, tiles, ruins)
+      aiUnits = aiResult.units
+      aiCities = aiResult.cities
+
+      nextIdx = (nextIdx + 1) % FACTIONS.length
+      nextFaction = FACTIONS[nextIdx]
+    }
+
+    // Restore moves for the player
+    const finalUnits = aiUnits.map((u) =>
+      u.faction === 'player' ? { ...u, movesLeft: u.movesPerTurn } : u
     )
 
+    // Check victory
+    const victor = checkVictory(aiCities)
+
     set({
-      currentFaction: nextFaction,
+      currentFaction: 'player',
       turnNumber: newTurn,
       units: finalUnits,
-      cities: updatedCities,
+      cities: aiCities,
       selectedUnitId: null,
       selectedCityId: null,
       movementRange: [],
+      victor,
     })
   },
 
@@ -251,17 +298,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setProduction: (cityId, unitType) => {
-    const { cities, currentFaction } = get()
+    const { cities, currentFaction, units, tiles } = get()
     const city = cities.find((c) => c.id === cityId)
     if (!city || city.owner !== currentFaction) return
 
+    // Orcs: instant militia production — spawn immediately
+    if (currentFaction === 'orcs' && unitType === 'militia') {
+      const pos = findSpawnPosition(city, units, tiles)
+      if (pos) {
+        const spawned = createUnit(currentFaction, 'militia', pos)
+        const updatedCities = cities.map((c) =>
+          c.id !== cityId ? c : { ...c, producing: unitType, turnsLeft: 1 }
+        )
+        set({ units: [...units, spawned], cities: updatedCities })
+        return
+      }
+    }
+
     const updatedCities = cities.map((c) => {
       if (c.id !== cityId) return c
-      let turns = unitType ? UNIT_TEMPLATES[unitType].productionTurns : 0
-      // Orcs: instant militia production
-      if (currentFaction === 'orcs' && unitType === 'militia') {
-        turns = 0
-      }
+      const turns = unitType ? UNIT_TEMPLATES[unitType].productionTurns : 0
       return { ...c, producing: unitType, turnsLeft: turns }
     })
     set({ cities: updatedCities })

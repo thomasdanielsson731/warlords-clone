@@ -450,3 +450,24 @@
   color: #5a9a5a;
   margin: 12px 0 16px;
 }
+
+/* ===== Victory Modal ===== */
+.victory-modal h2 {
+  font-size: 28px;
+  letter-spacing: 4px;
+}
+
+.victory-faction {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 12px 0 4px;
+  text-transform: capitalize;
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px currentColor;
+}
+
+.victory-turn {
+  font-size: 13px;
+  color: #807868;
+  margin: 0 0 20px;
+}

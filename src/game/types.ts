@@ -79,11 +79,13 @@ export const FACTION_BONUSES: Record<Faction, { label: string; description: stri
   bane: { label: 'Dark Fortress', description: 'Cities get +1 defense' },
 }
 
-export const MAP_WIDTH = 20
-export const MAP_HEIGHT = 20
+export const MAP_WIDTH = 40
+export const MAP_HEIGHT = 40
 
 export const XP_PER_COMBAT_WIN = 30
 export const XP_PER_LEVEL = 100
+export const HERO_MAX_LEVEL = 5
+export const VICTORY_CITY_PERCENT = 0.6
 
 export interface Ruin {
   id: string

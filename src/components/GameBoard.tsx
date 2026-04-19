@@ -18,6 +18,7 @@ export default function GameBoard() {
   const ruinResult = useGameStore((s) => s.ruinResult)
   const dismissRuinResult = useGameStore((s) => s.dismissRuinResult)
   const gold = useGameStore((s) => s.gold)
+  const victor = useGameStore((s) => s.victor)
 
   const selectedUnit = units.find((u) => u.id === selectedUnitId)
   const selectedCity = cities.find((c) => c.id === selectedCityId)
@@ -219,6 +220,21 @@ export default function GameBoard() {
             </p>
             <button className="combat-dismiss" onClick={dismissRuinResult}>
               OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {victor && (
+        <div className="combat-overlay">
+          <div className="combat-modal victory-modal">
+            <h2>🏆 Victory!</h2>
+            <p className="victory-faction" style={{ color: FACTION_COLORS[victor] }}>
+              {victor.toUpperCase()} conquers the realm!
+            </p>
+            <p className="victory-turn">Achieved on turn {turnNumber}</p>
+            <button className="combat-dismiss" onClick={() => window.location.reload()}>
+              New Game
             </button>
           </div>
         </div>

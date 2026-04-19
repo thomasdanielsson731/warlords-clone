@@ -105,29 +105,29 @@ function SceneContent() {
 
       {/* Main sun — warm golden directional */}
       <directionalLight
-        position={[15, 20, 10]}
+        position={[20, 28, 20]}
         intensity={0.9}
         color="#ffe8c0"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-camera-near={0.5}
-        shadow-camera-far={50}
-        shadow-camera-left={-15}
-        shadow-camera-right={15}
-        shadow-camera-top={15}
-        shadow-camera-bottom={-15}
+        shadow-camera-far={80}
+        shadow-camera-left={-30}
+        shadow-camera-right={30}
+        shadow-camera-top={30}
+        shadow-camera-bottom={-30}
         shadow-bias={-0.001}
       />
 
       {/* Cool fill light from opposite side */}
-      <directionalLight position={[-8, 12, -8]} intensity={0.2} color="#8090b0" />
+      <directionalLight position={[-10, 16, -10]} intensity={0.2} color="#8090b0" />
 
       {/* Hemisphere light for ground bounce */}
       <hemisphereLight args={['#b0c0d0', '#3a4a2a', 0.25]} />
 
       {/* === Atmosphere === */}
-      <fog attach="fog" args={['#2a2535', 18, 42]} />
+      <fog attach="fog" args={['#2a2535', 25, 70]} />
 
       {/* Sky color */}
       <color attach="background" args={['#1a1525']} />
@@ -201,10 +201,10 @@ export default function GameScene() {
       <Canvas
         shadows
         camera={{
-          position: [10, 16, 22],
+          position: [8, 18, 44],
           fov: 40,
           near: 0.1,
-          far: 100,
+          far: 150,
         }}
         gl={{
           antialias: true,
