@@ -2,6 +2,7 @@ import { useGameStore } from '../game/store'
 import { FACTION_COLORS, NEUTRAL_COLOR, UNIT_TEMPLATES, FACTION_BONUSES } from '../game/types'
 import type { UnitType } from '../game/types'
 import GameScene from '../scene/GameScene'
+import KingdomOverview from './KingdomOverview'
 import '../styles/GameBoard.css'
 
 export default function GameBoard() {
@@ -151,6 +152,7 @@ export default function GameBoard() {
       </div>
       <div className="map-container">
         <GameScene />
+        <KingdomOverview />
       </div>
 
       {combatResult && (

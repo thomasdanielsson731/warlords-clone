@@ -3,310 +3,292 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { TerrainType } from '../game/types'
 
-// --- Seeded RNG for deterministic terrain detail placement ---
-function seededRandom(seed: number) {
+// ── Seeded RNG ──────────────────────────────────────────────────────────────
+function sr(seed: number) {
   let s = seed
-  return () => {
-    s = (s * 16807 + 0) % 2147483647
-    return (s - 1) / 2147483646
-  }
+  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646 }
 }
 
-// --- Color palettes inspired by Songs of Conquest painterly style ---
-const GRASS_COLORS = ['#4a7a3a', '#5a8a45', '#3d6e30', '#6b9a55', '#4e8040']
-const FOREST_GROUND = ['#3a5e2a', '#2e4f22', '#4a6b35']
-const MOUNTAIN_COLORS = ['#6b5e50', '#7a6b5a', '#5e5045', '#8a7a6a']
-const WATER_COLORS = ['#2a5a8a', '#1e4a7a', '#3366aa']
+// ── Songs of Conquest palette – warm, painterly, high-contrast ──────────────
+const GRASS = ['#5a8a3a', '#4e7a35', '#68944a', '#3d6e2a', '#72a050', '#80a858']
+const GRASS_DARK = ['#3a5828', '#446830', '#4a7035']
+const DIRT = ['#8a7a55', '#7a6a48', '#9a8a60', '#a09068']
+const FLOWER = ['#d4a050', '#c87830', '#ddb855', '#bb5533', '#cc4444', '#dddd55']
+const ROCK_SM = ['#7a7060', '#8a8070', '#6a6050']
 
-interface TerrainTileProps {
-  terrain: TerrainType
-  x: number
-  y: number
-  highlighted: boolean
-  hovered: boolean
-  onClick: () => void
-  onPointerEnter: () => void
-  onPointerLeave: () => void
+const FOREST_GROUND = ['#3a5e2a', '#2e4f22', '#4a6b35', '#345828']
+const CANOPY_GREEN = ['#1a5c1a', '#226622', '#1a4e1a', '#2d7a2d']
+const CANOPY_AUTUMN = ['#c87830', '#d4943a', '#bb5533', '#e8a840', '#aa4422', '#dd6633']
+const TRUNK = ['#5c3d2e', '#4a3020', '#6b4a35']
+
+const MTN_ROCK = ['#6b5e50', '#7a6b5a', '#5e5045', '#8a7a6a', '#544838']
+const MTN_SNOW = ['#e8e0d5', '#f0ebe0', '#d8d0c5']
+
+const WATER_DEEP = '#1a4a6a'
+const WATER_SURF = ['#2a6a8a', '#2580a0', '#3388aa']
+
+interface Props {
+  terrain: TerrainType; x: number; y: number
+  highlighted: boolean; hovered: boolean
+  onClick: () => void; onPointerEnter: () => void; onPointerLeave: () => void
 }
 
-// --- Grass detail: small patches of varying color + occasional flowers/rocks ---
+// ── Grass with painterly patches, tufts, flowers, rocks ─────────────────────
 function GrassDetail({ x, y }: { x: number; y: number }) {
-  const details = useMemo(() => {
-    const rng = seededRandom(x * 1000 + y * 37)
-    const patches: { px: number; pz: number; color: string; scale: number }[] = []
-    // Ground color patches for painterly feel
-    for (let i = 0; i < 3; i++) {
-      patches.push({
-        px: (rng() - 0.5) * 0.7,
-        pz: (rng() - 0.5) * 0.7,
-        color: GRASS_COLORS[Math.floor(rng() * GRASS_COLORS.length)],
-        scale: 0.15 + rng() * 0.2,
-      })
-    }
-    // Small flowers or grass tufts
-    const tufts: { px: number; pz: number; color: string; h: number }[] = []
-    const numTufts = Math.floor(rng() * 4)
-    for (let i = 0; i < numTufts; i++) {
-      const flowerColors = ['#8ab840', '#7aaa35', '#bbc855', '#d4a050']
-      tufts.push({
-        px: (rng() - 0.5) * 0.8,
-        pz: (rng() - 0.5) * 0.8,
-        color: flowerColors[Math.floor(rng() * flowerColors.length)],
-        h: 0.03 + rng() * 0.04,
-      })
-    }
-    // Occasional small rock
-    const hasRock = rng() < 0.15
-    const rock = hasRock ? { px: (rng() - 0.5) * 0.5, pz: (rng() - 0.5) * 0.5, s: 0.04 + rng() * 0.04 } : null
-    return { patches, tufts, rock }
+  const d = useMemo(() => {
+    const r = sr(x * 1000 + y * 37)
+    const patches = Array.from({ length: 5 }, () => ({
+      px: (r() - 0.5) * 0.8, pz: (r() - 0.5) * 0.8,
+      color: (r() < 0.3 ? DIRT : r() < 0.5 ? GRASS_DARK : GRASS)[Math.floor(r() * 3)],
+      s: 0.1 + r() * 0.18,
+    }))
+    const tufts = Array.from({ length: 4 + Math.floor(r() * 4) }, () => ({
+      px: (r() - 0.5) * 0.85, pz: (r() - 0.5) * 0.85,
+      h: 0.02 + r() * 0.05, color: GRASS[Math.floor(r() * GRASS.length)],
+    }))
+    const flowers = r() < 0.45 ? Array.from({ length: 1 + Math.floor(r() * 3) }, () => ({
+      px: (r() - 0.5) * 0.7, pz: (r() - 0.5) * 0.7,
+      color: FLOWER[Math.floor(r() * FLOWER.length)], s: 0.012 + r() * 0.012,
+    })) : []
+    const rocks = r() < 0.2 ? [{
+      px: (r() - 0.5) * 0.5, pz: (r() - 0.5) * 0.5,
+      s: 0.03 + r() * 0.04, c: ROCK_SM[Math.floor(r() * 3)],
+    }] : []
+    return { patches, tufts, flowers, rocks }
   }, [x, y])
 
   return (
     <group>
-      {details.patches.map((p, i) => (
-        <mesh key={i} position={[p.px, 0.076, p.pz]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[p.scale, 6]} />
+      {d.patches.map((p, i) => (
+        <mesh key={i} position={[p.px, 0.081, p.pz]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[p.s, 6]} />
           <meshStandardMaterial color={p.color} />
         </mesh>
       ))}
-      {details.tufts.map((t, i) => (
-        <mesh key={`t${i}`} position={[t.px, 0.075 + t.h / 2, t.pz]}>
-          <boxGeometry args={[0.03, t.h, 0.03]} />
+      {d.tufts.map((t, i) => (
+        <mesh key={`t${i}`} position={[t.px, 0.08 + t.h / 2, t.pz]}>
+          <coneGeometry args={[0.015, t.h, 4]} />
           <meshStandardMaterial color={t.color} />
         </mesh>
       ))}
-      {details.rock && (
-        <mesh position={[details.rock.px, 0.075 + details.rock.s / 2, details.rock.pz]}>
-          <dodecahedronGeometry args={[details.rock.s, 0]} />
-          <meshStandardMaterial color="#8a8070" roughness={0.9} />
+      {d.flowers.map((f, i) => (
+        <mesh key={`f${i}`} position={[f.px, 0.09, f.pz]}>
+          <sphereGeometry args={[f.s, 5, 5]} />
+          <meshStandardMaterial color={f.color} emissive={f.color} emissiveIntensity={0.15} />
         </mesh>
-      )}
+      ))}
+      {d.rocks.map((rk, i) => (
+        <mesh key={`r${i}`} position={[rk.px, 0.08 + rk.s * 0.7, rk.pz]}>
+          <dodecahedronGeometry args={[rk.s, 0]} />
+          <meshStandardMaterial color={rk.c} roughness={0.95} />
+        </mesh>
+      ))}
     </group>
   )
 }
 
-// --- Forest: multiple trees with variation ---
+// ── Forest with autumn variety + wind sway ──────────────────────────────────
 function ForestDetail({ x, y }: { x: number; y: number }) {
   const trees = useMemo(() => {
-    const rng = seededRandom(x * 777 + y * 131)
-    const numTrees = 2 + Math.floor(rng() * 3) // 2-4 trees
-    const result: { px: number; pz: number; h: number; r: number; color: string; trunkH: number }[] = []
-    const treeColors = ['#1a5c1a', '#226622', '#1a4e1a', '#2d7a2d', '#185018']
-    for (let i = 0; i < numTrees; i++) {
-      result.push({
-        px: (rng() - 0.5) * 0.65,
-        pz: (rng() - 0.5) * 0.65,
-        h: 0.25 + rng() * 0.2,
-        r: 0.12 + rng() * 0.1,
-        color: treeColors[Math.floor(rng() * treeColors.length)],
-        trunkH: 0.15 + rng() * 0.1,
-      })
-    }
-    return result
+    const r = sr(x * 777 + y * 131)
+    const n = 3 + Math.floor(r() * 3)
+    return Array.from({ length: n }, (_, idx) => {
+      const isAutumn = r() < 0.35
+      const isBush = r() < 0.25
+      const canopy = isAutumn
+        ? CANOPY_AUTUMN[Math.floor(r() * CANOPY_AUTUMN.length)]
+        : CANOPY_GREEN[Math.floor(r() * CANOPY_GREEN.length)]
+      return {
+        idx,
+        px: (r() - 0.5) * 0.7, pz: (r() - 0.5) * 0.7,
+        h: isBush ? 0.1 + r() * 0.08 : 0.25 + r() * 0.25,
+        cr: isBush ? 0.08 + r() * 0.06 : 0.1 + r() * 0.1,
+        th: isBush ? 0.04 : 0.12 + r() * 0.12,
+        color: canopy,
+        trunkColor: TRUNK[Math.floor(r() * TRUNK.length)],
+        isBush, isAutumn,
+        leafLayers: isBush ? 1 : 2 + Math.floor(r() * 2),
+        rotY: r() * Math.PI * 2,
+      }
+    })
   }, [x, y])
 
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return
+    groupRef.current.children.forEach((child, i) => {
+      if (child instanceof THREE.Group) {
+        child.rotation.x = Math.sin(clock.elapsedTime * 0.8 + x + i * 1.7) * 0.015
+        child.rotation.z = Math.cos(clock.elapsedTime * 0.6 + y + i * 2.3) * 0.01
+      }
+    })
+  })
+
   return (
-    <group>
-      {trees.map((t, i) => (
-        <group key={i} position={[t.px, 0.075, t.pz]}>
-          {/* Trunk */}
-          <mesh position={[0, t.trunkH / 2, 0]} castShadow>
-            <cylinderGeometry args={[0.025, 0.035, t.trunkH, 5]} />
-            <meshStandardMaterial color="#5c3d2e" roughness={0.9} />
-          </mesh>
-          {/* Canopy - layered cones for depth */}
-          <mesh position={[0, t.trunkH + t.h * 0.3, 0]} castShadow>
-            <coneGeometry args={[t.r, t.h * 0.6, 6]} />
-            <meshStandardMaterial color={t.color} roughness={0.8} />
-          </mesh>
-          <mesh position={[0, t.trunkH + t.h * 0.55, 0]} castShadow>
-            <coneGeometry args={[t.r * 0.7, t.h * 0.45, 6]} />
-            <meshStandardMaterial color={t.color} roughness={0.8} />
-          </mesh>
+    <group ref={groupRef}>
+      {trees.map((t) => (
+        <group key={t.idx} position={[t.px, 0.08, t.pz]} rotation={[0, t.rotY, 0]}>
+          {!t.isBush && (
+            <mesh position={[0, t.th / 2, 0]} castShadow>
+              <cylinderGeometry args={[0.018, 0.03, t.th, 5]} />
+              <meshStandardMaterial color={t.trunkColor} roughness={0.9} />
+            </mesh>
+          )}
+          {Array.from({ length: t.leafLayers }, (_, li) => {
+            const layerY = t.th + t.h * (0.25 + li * 0.25)
+            const layerR = t.cr * (1 - li * 0.2)
+            return t.isBush ? (
+              <mesh key={li} position={[0, layerY * 0.5, 0]} castShadow>
+                <sphereGeometry args={[layerR, 6, 5]} />
+                <meshStandardMaterial color={t.color} roughness={0.8} />
+              </mesh>
+            ) : (
+              <mesh key={li} position={[0, layerY, 0]} castShadow>
+                <coneGeometry args={[layerR, t.h * 0.5 / t.leafLayers + 0.08, 6]} />
+                <meshStandardMaterial color={t.color} roughness={0.8} />
+              </mesh>
+            )
+          })}
+          {t.isAutumn && (
+            <mesh position={[0.05, 0.005, 0.05]} rotation={[-Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[0.04, 5]} />
+              <meshStandardMaterial color={t.color} transparent opacity={0.5} />
+            </mesh>
+          )}
         </group>
       ))}
     </group>
   )
 }
 
-// --- Mountain: rocky peaks with snow caps ---
+// ── Mountain with layered rock strata ───────────────────────────────────────
 function MountainDetail({ x, y }: { x: number; y: number }) {
-  const peaks = useMemo(() => {
-    const rng = seededRandom(x * 999 + y * 53)
-    const numPeaks = 1 + Math.floor(rng() * 2)
-    const result: { px: number; pz: number; h: number; r: number; color: string; hasSnow: boolean }[] = []
-    for (let i = 0; i < numPeaks; i++) {
-      result.push({
-        px: (rng() - 0.5) * 0.4,
-        pz: (rng() - 0.5) * 0.4,
-        h: 0.35 + rng() * 0.3,
-        r: 0.2 + rng() * 0.15,
-        color: MOUNTAIN_COLORS[Math.floor(rng() * MOUNTAIN_COLORS.length)],
-        hasSnow: rng() > 0.4,
-      })
-    }
-    // Add boulders
-    const boulders: { px: number; pz: number; s: number }[] = []
-    const numBoulders = 1 + Math.floor(rng() * 3)
-    for (let i = 0; i < numBoulders; i++) {
-      boulders.push({
-        px: (rng() - 0.5) * 0.7,
-        pz: (rng() - 0.5) * 0.7,
-        s: 0.04 + rng() * 0.06,
-      })
-    }
-    return { peaks: result, boulders }
+  const d = useMemo(() => {
+    const r = sr(x * 999 + y * 53)
+    const peaks = Array.from({ length: 1 + Math.floor(r() * 2) }, () => ({
+      px: (r() - 0.5) * 0.35, pz: (r() - 0.5) * 0.35,
+      h: 0.4 + r() * 0.35, rad: 0.18 + r() * 0.14,
+      color: MTN_ROCK[Math.floor(r() * MTN_ROCK.length)],
+      hasSnow: r() > 0.35,
+    }))
+    const strata = Array.from({ length: 2 + Math.floor(r() * 3) }, () => ({
+      px: (r() - 0.5) * 0.5, pz: (r() - 0.5) * 0.5,
+      h: 0.08 + r() * 0.12, w: 0.12 + r() * 0.15,
+      color: MTN_ROCK[Math.floor(r() * MTN_ROCK.length)], rotY: r() * Math.PI,
+    }))
+    const boulders = Array.from({ length: 2 + Math.floor(r() * 4) }, () => ({
+      px: (r() - 0.5) * 0.7, pz: (r() - 0.5) * 0.7,
+      s: 0.03 + r() * 0.05, color: MTN_ROCK[Math.floor(r() * MTN_ROCK.length)],
+    }))
+    return { peaks, strata, boulders }
   }, [x, y])
 
   return (
     <group>
-      {peaks.peaks.map((p, i) => (
+      {d.strata.map((s, i) => (
+        <mesh key={`s${i}`} position={[s.px, 0.1 + s.h / 2, s.pz]} rotation={[0, s.rotY, 0]} castShadow>
+          <boxGeometry args={[s.w, s.h, s.w * 0.6]} />
+          <meshStandardMaterial color={s.color} roughness={0.95} />
+        </mesh>
+      ))}
+      {d.peaks.map((p, i) => (
         <group key={i} position={[p.px, 0, p.pz]}>
-          {/* Rocky base */}
-          <mesh position={[0, 0.15 + p.h * 0.3, 0]} castShadow>
-            <coneGeometry args={[p.r, p.h * 0.6, 5]} />
+          <mesh position={[0, 0.12 + p.h * 0.25, 0]} castShadow>
+            <coneGeometry args={[p.rad, p.h * 0.55, 5]} />
             <meshStandardMaterial color={p.color} roughness={0.95} />
           </mesh>
-          {/* Peak */}
-          <mesh position={[0, 0.15 + p.h * 0.6, 0]} castShadow>
-            <coneGeometry args={[p.r * 0.5, p.h * 0.4, 5]} />
-            <meshStandardMaterial color={p.hasSnow ? '#e8e0d5' : p.color} roughness={0.7} />
+          <mesh position={[0, 0.12 + p.h * 0.55, 0]} castShadow>
+            <coneGeometry args={[p.rad * 0.5, p.h * 0.45, 5]} />
+            <meshStandardMaterial color={p.hasSnow ? MTN_SNOW[i % 3] : p.color} roughness={0.6} />
           </mesh>
         </group>
       ))}
-      {peaks.boulders.map((b, i) => (
-        <mesh key={`b${i}`} position={[b.px, 0.075 + b.s, b.pz]} castShadow>
+      {d.boulders.map((b, i) => (
+        <mesh key={`b${i}`} position={[b.px, 0.09 + b.s, b.pz]} castShadow>
           <dodecahedronGeometry args={[b.s, 0]} />
-          <meshStandardMaterial color="#7a6e60" roughness={0.95} />
+          <meshStandardMaterial color={b.color} roughness={0.95} />
         </mesh>
       ))}
     </group>
   )
 }
 
-// --- Water: animated surface ---
+// ── Water with animated surface + shimmer ───────────────────────────────────
 function WaterTile({ x, y }: { x: number; y: number }) {
-  const meshRef = useRef<THREE.Mesh>(null)
+  const surfRef = useRef<THREE.Mesh>(null)
   const matRef = useRef<THREE.MeshStandardMaterial>(null)
 
   useFrame(({ clock }) => {
-    if (meshRef.current) {
-      meshRef.current.position.y = 0.02 + Math.sin(clock.elapsedTime * 0.8 + x * 1.5 + y * 2.1) * 0.008
-    }
-    if (matRef.current) {
-      matRef.current.opacity = 0.7 + Math.sin(clock.elapsedTime * 1.2 + x + y) * 0.05
-    }
+    const t = clock.elapsedTime
+    if (surfRef.current) surfRef.current.position.y = 0.025 + Math.sin(t * 0.7 + x * 1.5 + y * 2.1) * 0.006
+    if (matRef.current) matRef.current.opacity = 0.72 + Math.sin(t * 1.2 + x + y) * 0.06
   })
 
-  const color = useMemo(() => {
-    const rng = seededRandom(x * 333 + y * 77)
-    return WATER_COLORS[Math.floor(rng() * WATER_COLORS.length)]
-  }, [x, y])
+  const color = useMemo(() => WATER_SURF[Math.floor(sr(x * 333 + y * 77)() * 3)], [x, y])
 
   return (
     <group>
-      {/* Deep water base */}
-      <mesh position={[0, 0.01, 0]} receiveShadow>
-        <boxGeometry args={[0.98, 0.02, 0.98]} />
-        <meshStandardMaterial color="#1a3a5a" />
+      <mesh position={[0, 0.008, 0]} receiveShadow>
+        <boxGeometry args={[0.98, 0.016, 0.98]} />
+        <meshStandardMaterial color={WATER_DEEP} roughness={0.3} />
       </mesh>
-      {/* Animated surface */}
-      <mesh ref={meshRef} position={[0, 0.025, 0]} receiveShadow>
-        <boxGeometry args={[0.96, 0.015, 0.96]} />
-        <meshStandardMaterial
-          ref={matRef}
-          color={color}
-          transparent
-          opacity={0.75}
-          roughness={0.1}
-          metalness={0.3}
-        />
+      <mesh ref={surfRef} position={[0, 0.025, 0]} receiveShadow>
+        <boxGeometry args={[0.96, 0.012, 0.96]} />
+        <meshStandardMaterial ref={matRef} color={color} transparent opacity={0.75} roughness={0.05} metalness={0.4} />
       </mesh>
     </group>
   )
 }
 
-export default function TerrainTile({
-  terrain,
-  x,
-  y,
-  highlighted,
-  hovered,
-  onClick,
-  onPointerEnter,
-  onPointerLeave,
-}: TerrainTileProps) {
+// ── Main TerrainTile ────────────────────────────────────────────────────────
+export default function TerrainTile({ terrain, x, y, highlighted, hovered, onClick, onPointerEnter, onPointerLeave }: Props) {
   const [localHover, setLocalHover] = useState(false)
   const isHovered = hovered || localHover
 
   const baseColor = useMemo(() => {
-    const rng = seededRandom(x * 500 + y * 23)
-    if (terrain === 'grass') return GRASS_COLORS[Math.floor(rng() * GRASS_COLORS.length)]
-    if (terrain === 'forest') return FOREST_GROUND[Math.floor(rng() * FOREST_GROUND.length)]
+    const r = sr(x * 500 + y * 23)
+    if (terrain === 'grass') return GRASS[Math.floor(r() * GRASS.length)]
+    if (terrain === 'forest') return FOREST_GROUND[Math.floor(r() * FOREST_GROUND.length)]
     if (terrain === 'mountain') return '#5a4e40'
-    return '#1a3a5a'
+    return WATER_DEEP
   }, [terrain, x, y])
 
-  const tileHeight = terrain === 'mountain' ? 0.15 : terrain === 'water' ? 0.03 : 0.075
+  const tileH = terrain === 'mountain' ? 0.18 : terrain === 'water' ? 0.02 : 0.08
 
-  // Glow ring ref for animation
   const glowRef = useRef<THREE.Mesh>(null)
   useFrame(({ clock }) => {
     if (glowRef.current && highlighted) {
-      glowRef.current.material = glowRef.current.material as THREE.MeshBasicMaterial
-      const mat = glowRef.current.material as THREE.MeshBasicMaterial
-      mat.opacity = 0.2 + Math.sin(clock.elapsedTime * 2.5) * 0.1
+      (glowRef.current.material as THREE.MeshBasicMaterial).opacity =
+        0.22 + Math.sin(clock.elapsedTime * 2.5) * 0.1
     }
   })
 
   return (
     <group position={[x, 0, y]}>
-      {/* Base terrain slab */}
       <mesh
-        position={[0, tileHeight / 2, 0]}
+        position={[0, tileH / 2, 0]}
         onClick={(e) => { e.stopPropagation(); onClick() }}
         onPointerEnter={(e) => { e.stopPropagation(); setLocalHover(true); onPointerEnter() }}
         onPointerLeave={() => { setLocalHover(false); onPointerLeave() }}
-        receiveShadow
-        castShadow={terrain === 'mountain'}
+        receiveShadow castShadow={terrain === 'mountain'}
       >
-        <boxGeometry args={[0.98, tileHeight, 0.98]} />
-        <meshStandardMaterial
-          color={baseColor}
-          roughness={0.85}
-          metalness={0.0}
-        />
+        <boxGeometry args={[0.98, tileH, 0.98]} />
+        <meshStandardMaterial color={baseColor} roughness={0.85} />
       </mesh>
 
-      {/* Terrain-specific detail */}
       {terrain === 'grass' && <GrassDetail x={x} y={y} />}
-      {terrain === 'forest' && (
-        <>
-          <GrassDetail x={x} y={y} />
-          <ForestDetail x={x} y={y} />
-        </>
-      )}
+      {terrain === 'forest' && (<><GrassDetail x={x} y={y} /><ForestDetail x={x} y={y} /></>)}
       {terrain === 'mountain' && <MountainDetail x={x} y={y} />}
       {terrain === 'water' && <WaterTile x={x} y={y} />}
 
-      {/* Movement range highlight — pulsing green glow */}
       {highlighted && (
-        <mesh
-          ref={glowRef}
-          position={[0, tileHeight + 0.005, 0]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
+        <mesh ref={glowRef} position={[0, tileH + 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[0.96, 0.96]} />
           <meshBasicMaterial color="#44ff88" transparent opacity={0.25} depthWrite={false} />
         </mesh>
       )}
-
-      {/* Hover highlight — subtle golden border */}
       {isHovered && !highlighted && (
-        <mesh
-          position={[0, tileHeight + 0.005, 0]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
+        <mesh position={[0, tileH + 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.42, 0.48, 4]} />
           <meshBasicMaterial color="#c8a84e" transparent opacity={0.4} depthWrite={false} />
         </mesh>
