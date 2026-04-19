@@ -4,40 +4,31 @@ import * as THREE from 'three'
 import { useGameStore } from '../game/store'
 import { findNearestNeutralCity, findNearestRuin, findPlayerCapital } from '../game/tutorial'
 
-/** Animated bouncing arrow marker above a tile */
-function ArrowMarker({ x, y, color, label }: { x: number; y: number; color: string; label: string }) {
+function ArrowMarker({ x, y, color }: { x: number; y: number; color: string }) {
   const groupRef = useRef<THREE.Group>(null)
-
   useFrame(({ clock }) => {
-    if (groupRef.current) {
-      groupRef.current.position.y = 1.2 + Math.sin(clock.elapsedTime * 2.5) * 0.15
-    }
+    if (groupRef.current) groupRef.current.position.y = 1.2 + Math.sin(clock.elapsedTime * 2.5) * 0.15
   })
 
   return (
     <group position={[x, 0, y]}>
       <group ref={groupRef}>
-        {/* Arrow shaft */}
         <mesh position={[0, 0, 0]} rotation={[Math.PI, 0, 0]}>
           <coneGeometry args={[0.12, 0.3, 6]} />
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
         </mesh>
-        {/* Arrow tail */}
         <mesh position={[0, 0.25, 0]}>
           <cylinderGeometry args={[0.04, 0.04, 0.2, 6]} />
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
         </mesh>
       </group>
-      {/* Ground ring pulse */}
       <GroundPulse x={0} y={0} color={color} />
     </group>
   )
 }
 
-/** Pulsing ring on the ground */
 function GroundPulse({ x, y, color }: { x: number; y: number; color: string }) {
   const ref = useRef<THREE.Mesh>(null)
-
   useFrame(({ clock }) => {
     if (ref.current) {
       const t = (clock.elapsedTime * 1.2) % 1
@@ -61,7 +52,6 @@ export default function ObjectiveMarkers() {
   const turnNumber = useGameStore((s) => s.turnNumber)
   const tutorialDismissed = useGameStore((s) => s.tutorialDismissed)
 
-  // Only show markers in early game (first 5 turns) or if tutorial not dismissed
   if (turnNumber > 5 && tutorialDismissed) return null
 
   const playerHero = units.find((u) => u.faction === 'player' && u.unitType === 'hero')
@@ -73,15 +63,9 @@ export default function ObjectiveMarkers() {
 
   return (
     <group>
-      {nearestCity && (
-        <ArrowMarker x={nearestCity.x} y={nearestCity.y} color="#ffd700" label="Capture" />
-      )}
-      {nearestRuin && (
-        <ArrowMarker x={nearestRuin.x} y={nearestRuin.y} color="#aa55ff" label="Explore" />
-      )}
-      {capital && turnNumber <= 2 && (
-        <GroundPulse x={capital.x} y={capital.y} color="#3366cc" />
-      )}
+      {nearestCity && <ArrowMarker x={nearestCity.x} y={nearestCity.y} color="#ffd700" />}
+      {nearestRuin && <ArrowMarker x={nearestRuin.x} y={nearestRuin.y} color="#aa55ff" />}
+      {capital && turnNumber <= 2 && <GroundPulse x={capital.x} y={capital.y} color="#3366cc" />}
     </group>
   )
 }

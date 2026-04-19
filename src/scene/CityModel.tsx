@@ -49,7 +49,7 @@ function Banner({ position, color, height = 0.12 }: { position: [number, number,
   )
 }
 
-// ── Human City: full castle complex ─────────────────────────────────────────
+// ── Human City: castle complex ──────────────────────────────────────────────
 function HumanCity({ color }: { color: string }) {
   return (
     <group>
@@ -99,18 +99,17 @@ function HumanCity({ color }: { color: string }) {
         </mesh>
       ))}
 
-      {/* Gate */}
+      {/* Gate + arch */}
       <mesh position={[0, 0.08, 0.27]}>
         <boxGeometry args={[0.1, 0.16, 0.02]} />
         <meshStandardMaterial color="#4a3a2a" />
       </mesh>
-      {/* Gate arch */}
       <mesh position={[0, 0.18, 0.27]}>
         <boxGeometry args={[0.12, 0.03, 0.025]} />
         <meshStandardMaterial color="#6a5a4a" />
       </mesh>
 
-      {/* Houses in courtyard */}
+      {/* Courtyard buildings */}
       {[[-0.1, 0.08, 0.12], [0.12, 0.07, -0.12]].map(([hx, hh, hz], i) => (
         <group key={`h${i}`} position={[hx, 0, hz]}>
           <mesh position={[0, hh / 2 + 0.02, 0]} castShadow>
@@ -218,12 +217,10 @@ function OrcCity({ color }: { color: string }) {
           <cylinderGeometry args={[0.02, 0.025, 0.3, 4]} />
           <meshStandardMaterial color="#4a3020" roughness={0.95} />
         </mesh>
-        {/* Totem head */}
         <mesh position={[0, 0.32, 0]}>
           <boxGeometry args={[0.06, 0.05, 0.04]} />
           <meshStandardMaterial color="#5a3828" />
         </mesh>
-        {/* Totem eyes */}
         {[[-0.015, 0], [0.015, 0]].map(([ex, ez], i) => (
           <mesh key={i} position={[ex, 0.33, 0.021 + ez]}>
             <sphereGeometry args={[0.006, 4, 4]} />
@@ -259,7 +256,7 @@ function OrcCity({ color }: { color: string }) {
 function ElfCity({ color }: { color: string }) {
   return (
     <group>
-      {/* Central spire – tall, elegant */}
+      {/* Central spire */}
       <mesh position={[0, 0.4, 0]} castShadow>
         <cylinderGeometry args={[0.1, 0.13, 0.8, 8]} />
         <meshStandardMaterial color="#e0ddd5" roughness={0.5} metalness={0.1} />
@@ -280,7 +277,6 @@ function ElfCity({ color }: { color: string }) {
             <coneGeometry args={[0.075, 0.14, 8]} />
             <meshStandardMaterial color="#77aa77" roughness={0.6} />
           </mesh>
-          {/* Balcony ring */}
           <mesh position={[0, 0.33, 0]}>
             <torusGeometry args={[0.065, 0.006, 4, 8]} />
             <meshStandardMaterial color="#c0bbb0" />
@@ -288,13 +284,13 @@ function ElfCity({ color }: { color: string }) {
         </group>
       ))}
 
-      {/* Arched bridge connecting towers */}
+      {/* Arched bridge */}
       <mesh position={[0, 0.17, 0.1]} castShadow>
         <boxGeometry args={[0.35, 0.025, 0.06]} />
         <meshStandardMaterial color="#d0ccbb" roughness={0.5} />
       </mesh>
 
-      {/* Decorative glowing trees */}
+      {/* Glowing trees */}
       {[[-0.35, 0, 0], [0.35, 0, 0], [0.15, 0, -0.3]].map(([tx, , tz], i) => (
         <group key={`t${i}`} position={[tx, 0, tz]}>
           <mesh position={[0, 0.1, 0]}>
@@ -308,13 +304,13 @@ function ElfCity({ color }: { color: string }) {
         </group>
       ))}
 
-      {/* Vine wall / garden hedge */}
+      {/* Garden hedge */}
       <mesh position={[0, 0.04, -0.25]} castShadow>
         <boxGeometry args={[0.5, 0.06, 0.04]} />
         <meshStandardMaterial color="#3a7a3a" roughness={0.8} />
       </mesh>
 
-      {/* Crystal spire top */}
+      {/* Crystal top */}
       <mesh position={[0, 0.98, 0]}>
         <octahedronGeometry args={[0.04]} />
         <meshStandardMaterial color="#aaffaa" emissive="#55ff55" emissiveIntensity={0.6} transparent opacity={0.8} />
@@ -326,7 +322,7 @@ function ElfCity({ color }: { color: string }) {
   )
 }
 
-// ── Bane City: dark gothic fortress, purple energy, necromantic glow ────────
+// ── Bane City: dark gothic fortress ─────────────────────────────────────────
 function BaneCity({ color }: { color: string }) {
   return (
     <group>
@@ -354,7 +350,7 @@ function BaneCity({ color }: { color: string }) {
         </group>
       ))}
 
-      {/* Dark walls between spires */}
+      {/* Dark walls */}
       {[
         [0, 0.12, -0.22, 0.44, 0.24, 0.04],
         [0, 0.12, 0.22, 0.44, 0.24, 0.04],
@@ -373,7 +369,6 @@ function BaneCity({ color }: { color: string }) {
           <boxGeometry args={[0.1, 0.12, 0.02]} />
           <meshStandardMaterial color="#0a0810" />
         </mesh>
-        {/* Arch */}
         <mesh position={[0, 0.07, 0]}>
           <boxGeometry args={[0.12, 0.02, 0.025]} />
           <meshStandardMaterial color="#2a1830" />
@@ -395,7 +390,7 @@ function BaneCity({ color }: { color: string }) {
       </mesh>
       <pointLight position={[0, 0.95, 0]} color="#9933ff" intensity={0.5} distance={2} decay={2} />
 
-      {/* Energy conduits – glowing lines from spires to orb */}
+      {/* Energy conduits */}
       {[[-0.22, 0.45, -0.22], [0.22, 0.45, 0.22]].map(([cx, cy, cz], i) => (
         <mesh key={`ec${i}`} position={[(cx) / 2, (cy + 0.95) / 2, (cz) / 2]}>
           <cylinderGeometry args={[0.004, 0.004, 0.6, 3]} />
@@ -415,7 +410,7 @@ function BaneCity({ color }: { color: string }) {
   )
 }
 
-// ── Neutral city: solid grey fortress ───────────────────────────────────────
+// ── Neutral city ────────────────────────────────────────────────────────────
 function NeutralCity() {
   return (
     <group>
@@ -433,7 +428,6 @@ function NeutralCity() {
         <coneGeometry args={[0.2, 0.12, 4]} />
         <meshStandardMaterial color="#5a5a55" />
       </mesh>
-      {/* Gate */}
       <mesh position={[0, 0.07, 0.18]}>
         <boxGeometry args={[0.08, 0.14, 0.02]} />
         <meshStandardMaterial color="#444" />

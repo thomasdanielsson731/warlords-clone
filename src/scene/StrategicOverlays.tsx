@@ -4,7 +4,6 @@ import { getMovementRange } from '../game/gamelogic'
 import type { Position } from '../game/types'
 import { CITY_BONUSES } from '../game/types'
 
-/** Flat colored quad overlay for a tile */
 function TileOverlay({ x, y, color, opacity }: { x: number; y: number; color: string; opacity: number }) {
   return (
     <mesh position={[x, 0.06, y]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -14,7 +13,6 @@ function TileOverlay({ x, y, color, opacity }: { x: number; y: number; color: st
   )
 }
 
-/** Movement range overlay — blue */
 function MovementOverlay() {
   const movementRange = useGameStore((s) => s.movementRange)
   if (movementRange.length === 0) return null
@@ -27,7 +25,6 @@ function MovementOverlay() {
   )
 }
 
-/** Enemy threat range overlay — red tiles where enemies can reach */
 function ThreatOverlay() {
   const units = useGameStore((s) => s.units)
   const tiles = useGameStore((s) => s.tiles)
@@ -35,12 +32,10 @@ function ThreatOverlay() {
   const roadSet = useGameStore((s) => s.roadSet)
   const selectedUnitId = useGameStore((s) => s.selectedUnitId)
 
-  // Only compute when a unit is selected (performance)
   const threatSet = useMemo(() => {
     if (!selectedUnitId) return new Set<string>()
     const enemies = units.filter((u) => u.faction !== 'player' && u.movesLeft > 0)
     const set = new Set<string>()
-    // Only show threats from nearby enemies (within 12 tiles) for performance
     const selected = units.find((u) => u.id === selectedUnitId)
     for (const enemy of enemies) {
       if (selected && (Math.abs(enemy.x - selected.x) + Math.abs(enemy.y - selected.y)) > 12) continue
@@ -67,10 +62,8 @@ function ThreatOverlay() {
   )
 }
 
-/** Capturable cities — gold glow ring on neutral/enemy cities */
 function CapturableCityOverlay() {
   const cities = useGameStore((s) => s.cities)
-
   const capturable = cities.filter((c) => c.owner !== 'player')
 
   return (
@@ -91,7 +84,6 @@ function CapturableCityOverlay() {
   )
 }
 
-/** Unexplored ruins — purple glow */
 function RuinOverlay() {
   const ruins = useGameStore((s) => s.ruins)
   const unexplored = ruins.filter((r) => !r.explored)

@@ -1,2 +1,2 @@
-// This file is deprecated. Use MapView.tsx instead.
+// Deprecated — use MapView.tsx instead
 export { default } from './MapView'

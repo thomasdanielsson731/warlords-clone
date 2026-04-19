@@ -1,4 +1,24 @@
-import type { Tile, Unit, City, Faction, UnitType, Position, Ruin, CombatResult, RuinResult } from './types'
+// Script to regenerate all game source files
+const fs = require('fs');
+const path = require('path');
+
+const SRC = 'c:/dev/warlords/src';
+
+function write(relPath, content) {
+  const full = path.join(SRC, relPath);
+  fs.mkdirSync(path.dirname(full), { recursive: true });
+  fs.writeFileSync(full, content, 'utf8');
+  console.log('Wrote', relPath);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// types.ts — already correct, skip
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════
+// gamelogic.ts
+// ═══════════════════════════════════════════════════════════════════════════
+write('game/gamelogic.ts', `import type { Tile, Unit, City, Faction, UnitType, Position, Ruin, CombatResult, RuinResult } from './types'
 import {
   MAP_WIDTH, MAP_HEIGHT, TERRAIN_MOVE_COST, UNIT_TEMPLATES,
   XP_PER_COMBAT_WIN, XP_PER_LEVEL, HERO_MAX_LEVEL, DRAGON_STRENGTH,
@@ -31,7 +51,7 @@ export function getMovementRange(
   const reachable: Position[] = []
   const visited = new Map<string, number>()
   const queue: { x: number; y: number; cost: number }[] = [{ x: unit.x, y: unit.y, cost: 0 }]
-  visited.set(`${unit.x},${unit.y}`, 0)
+  visited.set(\`\${unit.x},\${unit.y}\`, 0)
   const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
 
   while (queue.length > 0) {
@@ -39,12 +59,12 @@ export function getMovementRange(
     for (const { dx, dy } of dirs) {
       const nx = cur.x + dx, ny = cur.y + dy
       if (nx < 0 || nx >= MAP_WIDTH || ny < 0 || ny >= MAP_HEIGHT) continue
-      const onRoad = roadSet?.has(`${nx},${ny}`) ?? false
+      const onRoad = roadSet?.has(\`\${nx},\${ny}\`) ?? false
       const cost = getMoveCost(tiles[ny][nx].terrain, unit.faction, onRoad)
       if (cost === Infinity) continue
       const total = cur.cost + cost
       if (total > unit.movesLeft) continue
-      const key = `${nx},${ny}`
+      const key = \`\${nx},\${ny}\`
       const prev = visited.get(key)
       if (prev !== undefined && prev <= total) continue
 
@@ -182,7 +202,7 @@ let unitCounter = 0
 export function createUnit(faction: Faction, unitType: UnitType, pos: Position): Unit {
   const tpl = UNIT_TEMPLATES[unitType]
   return {
-    id: `u-${faction}-${unitType}-${++unitCounter}-${Date.now()}`,
+    id: \`u-\${faction}-\${unitType}-\${++unitCounter}-\${Date.now()}\`,
     faction, unitType,
     x: pos.x, y: pos.y,
     strength: tpl.strength,
@@ -266,7 +286,7 @@ export function exploreRuin(hero: Unit, allUnits: Unit[], tiles: Tile[][]): {
     const amount = (Math.floor(Math.random() * 5) + 1) * 50
     updatedHero = grantXp(updatedHero, 20)
     return {
-      result: { heroName, type: 'gold', description: `Found ${amount} gold! +20 XP`, goldAmount: amount },
+      result: { heroName, type: 'gold', description: \`Found \${amount} gold! +20 XP\`, goldAmount: amount },
       updatedHero, spawnedUnit: null, heroKilled: false,
     }
   }
@@ -276,7 +296,7 @@ export function exploreRuin(hero: Unit, allUnits: Unit[], tiles: Tile[][]): {
     updatedHero = { ...updatedHero, inventory: [...(updatedHero.inventory ?? []), name], strength: updatedHero.strength + 1 }
     updatedHero = grantXp(updatedHero, 25)
     return {
-      result: { heroName, type: 'artifact', description: `Found ${name}! +1 STR, +25 XP`, artifactName: name },
+      result: { heroName, type: 'artifact', description: \`Found \${name}! +1 STR, +25 XP\`, artifactName: name },
       updatedHero, spawnedUnit: null, heroKilled: false,
     }
   }
@@ -288,7 +308,7 @@ export function exploreRuin(hero: Unit, allUnits: Unit[], tiles: Tile[][]): {
     const spawnedUnit = spawnPos ? createUnit(hero.faction, allyType, spawnPos) : null
     updatedHero = grantXp(updatedHero, 15)
     return {
-      result: { heroName, type: 'ally', description: spawnPos ? `A ${allyType} pledges loyalty! +15 XP` : 'Warriors wished to join, but no room nearby.', allyType: spawnPos ? allyType : undefined },
+      result: { heroName, type: 'ally', description: spawnPos ? \`A \${allyType} pledges loyalty! +15 XP\` : 'Warriors wished to join, but no room nearby.', allyType: spawnPos ? allyType : undefined },
       updatedHero, spawnedUnit, heroKilled: false,
     }
   }
@@ -303,8 +323,8 @@ export function exploreRuin(hero: Unit, allUnits: Unit[], tiles: Tile[][]): {
       result: {
         heroName, type: 'dragon',
         description: defeated
-          ? `Defeated the dragon! (${heroTotal} vs ${dragonTotal}) +50 XP`
-          : `The dragon was too powerful! (${heroTotal} vs ${dragonTotal}) ${heroName} has fallen!`,
+          ? \`Defeated the dragon! (\${heroTotal} vs \${dragonTotal}) +50 XP\`
+          : \`The dragon was too powerful! (\${heroTotal} vs \${dragonTotal}) \${heroName} has fallen!\`,
         dragonDefeated: defeated, dragonStrength: DRAGON_STRENGTH, heroRoll, dragonRoll,
       },
       updatedHero: defeated ? grantXp(updatedHero, 50) : hero,
@@ -439,3 +459,6 @@ function findNearestTargetCity(unit: Unit, cities: City[], faction: Faction): Ci
   }
   return best
 }
+`);
+
+console.log('gamelogic.ts done');

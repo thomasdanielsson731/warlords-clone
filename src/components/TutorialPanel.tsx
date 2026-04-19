@@ -8,7 +8,6 @@ export default function TutorialPanel() {
   const dismissTutorial = useGameStore((s) => s.dismissTutorial)
   const turnNumber = useGameStore((s) => s.turnNumber)
 
-  // Hide after turn 5 or if dismissed
   if (tutorialDismissed || turnNumber > 5) return null
 
   const currentStep = TUTORIAL_STEPS[tutorialStep] ?? null
@@ -21,7 +20,6 @@ export default function TutorialPanel() {
         <button className="tutorial-dismiss" onClick={dismissTutorial} title="Dismiss tutorial">✕</button>
       </div>
 
-      {/* Current objective */}
       {currentStep && !allDone && (
         <div className="tutorial-objective">
           <span className="tutorial-obj-icon">{currentStep.icon}</span>
@@ -42,7 +40,6 @@ export default function TutorialPanel() {
         </div>
       )}
 
-      {/* Progress dots */}
       <div className="tutorial-progress">
         {TUTORIAL_STEPS.map((step, i) => (
           <div
@@ -53,7 +50,6 @@ export default function TutorialPanel() {
         ))}
       </div>
 
-      {/* Quick reference */}
       <div className="tutorial-topics">
         {TUTORIAL_TOPICS.map((topic) => (
           <div key={topic.title} className="tutorial-topic">

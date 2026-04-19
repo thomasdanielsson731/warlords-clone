@@ -9,7 +9,7 @@ function sr(seed: number) {
   return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646 }
 }
 
-// ── Songs of Conquest palette – warm, painterly, high-contrast ──────────────
+// ── Color palettes ──────────────────────────────────────────────────────────
 const GRASS = ['#5a8a3a', '#4e7a35', '#68944a', '#3d6e2a', '#72a050', '#80a858']
 const GRASS_DARK = ['#3a5828', '#446830', '#4a7035']
 const DIRT = ['#8a7a55', '#7a6a48', '#9a8a60', '#a09068']
@@ -99,15 +99,12 @@ function ForestDetail({ x, y }: { x: number; y: number }) {
         ? CANOPY_AUTUMN[Math.floor(r() * CANOPY_AUTUMN.length)]
         : CANOPY_GREEN[Math.floor(r() * CANOPY_GREEN.length)]
       return {
-        idx,
-        px: (r() - 0.5) * 0.7, pz: (r() - 0.5) * 0.7,
+        idx, px: (r() - 0.5) * 0.7, pz: (r() - 0.5) * 0.7,
         h: isBush ? 0.1 + r() * 0.08 : 0.25 + r() * 0.25,
         cr: isBush ? 0.08 + r() * 0.06 : 0.1 + r() * 0.1,
         th: isBush ? 0.04 : 0.12 + r() * 0.12,
-        color: canopy,
-        trunkColor: TRUNK[Math.floor(r() * TRUNK.length)],
-        isBush, isAutumn,
-        leafLayers: isBush ? 1 : 2 + Math.floor(r() * 2),
+        color: canopy, trunkColor: TRUNK[Math.floor(r() * TRUNK.length)],
+        isBush, isAutumn, leafLayers: isBush ? 1 : 2 + Math.floor(r() * 2),
         rotY: r() * Math.PI * 2,
       }
     })

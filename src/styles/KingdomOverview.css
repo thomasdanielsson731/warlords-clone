@@ -1,6 +1,5 @@
-/* ===== Kingdom Overview — Premium Fantasy Dashboard ===== */
+/* ===== Kingdom Overview Dashboard ===== */
 
-/* Toggle button — floating crown */
 .ko-toggle {
   position: absolute;
   top: 12px;
@@ -27,7 +26,6 @@
   border-color: #c8a84e;
 }
 
-/* Overlay */
 .ko-overlay {
   position: fixed;
   inset: 0;
@@ -45,7 +43,6 @@
   to { opacity: 1; }
 }
 
-/* Main panel */
 .ko-panel {
   width: min(720px, 92vw);
   max-height: 90vh;
@@ -53,10 +50,7 @@
   background: linear-gradient(180deg, #1a1714 0%, #0f0d0b 100%);
   border: 2px solid #3a3020;
   border-radius: 12px;
-  box-shadow:
-    0 0 60px rgba(0, 0, 0, 0.8),
-    0 0 1px 1px rgba(200, 168, 78, 0.1),
-    inset 0 1px 0 rgba(200, 168, 78, 0.08);
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(200, 168, 78, 0.1), inset 0 1px 0 rgba(200, 168, 78, 0.08);
   animation: ko-slideUp 0.25s ease-out;
 }
 
@@ -65,7 +59,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Header */
 .ko-header {
   display: flex;
   align-items: center;
@@ -117,7 +110,6 @@
   border-color: #c8a84e;
 }
 
-/* Objective */
 .ko-objective {
   text-align: center;
   padding: 10px 20px;
@@ -126,11 +118,8 @@
   border-bottom: 1px solid #1e1a15;
 }
 
-.ko-objective strong {
-  color: #c8a84e;
-}
+.ko-objective strong { color: #c8a84e; }
 
-/* Card grid */
 .ko-grid {
   display: flex;
   flex-direction: column;
@@ -138,7 +127,6 @@
   padding: 12px 16px;
 }
 
-/* Individual faction card */
 .ko-card {
   display: flex;
   flex-direction: column;
@@ -147,20 +135,16 @@
   border-radius: 8px;
   overflow: hidden;
   transition: border-color 0.2s;
+  position: relative;
 }
 
-.ko-card:hover {
-  border-color: #3a3020;
-}
+.ko-card:hover { border-color: #3a3020; }
 
 .ko-card-player {
   border-color: var(--faction-color, #3366cc);
-  box-shadow:
-    0 0 12px color-mix(in srgb, var(--faction-color, #3366cc) 20%, transparent),
-    inset 0 0 20px color-mix(in srgb, var(--faction-color, #3366cc) 5%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--faction-color, #3366cc) 20%, transparent), inset 0 0 20px color-mix(in srgb, var(--faction-color, #3366cc) 5%, transparent);
 }
 
-/* Rank badge */
 .ko-card-rank {
   position: absolute;
   top: 8px;
@@ -171,7 +155,6 @@
   letter-spacing: 1px;
 }
 
-/* Banner area */
 .ko-card-banner {
   display: flex;
   align-items: center;
@@ -228,7 +211,6 @@
   right: 40px;
 }
 
-/* Stats row */
 .ko-card-stats {
   display: flex;
   gap: 0;
@@ -245,26 +227,10 @@
   gap: 2px;
 }
 
-.ko-stat-icon {
-  font-size: 14px;
-  line-height: 1;
-}
+.ko-stat-icon { font-size: 14px; line-height: 1; }
+.ko-stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #605848; }
+.ko-stat-value { font-size: 16px; font-weight: bold; color: #d4c9b8; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
 
-.ko-stat-label {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #605848;
-}
-
-.ko-stat-value {
-  font-size: 16px;
-  font-weight: bold;
-  color: #d4c9b8;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Progress bar */
 .ko-card-progress {
   display: flex;
   align-items: center;
@@ -294,7 +260,6 @@
   white-space: nowrap;
 }
 
-/* Footer */
 .ko-footer {
   padding: 10px 20px;
   border-top: 1px solid #1e1a15;

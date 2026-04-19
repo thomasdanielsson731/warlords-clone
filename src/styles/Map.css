@@ -17,13 +17,9 @@
   transition: filter 0.15s ease;
 }
 
-.tile:hover {
-  filter: brightness(1.2);
-}
+.tile:hover { filter: brightness(1.2); }
 
-.tile.highlighted {
-  animation: pulse 1.2s ease-in-out infinite;
-}
+.tile.highlighted { animation: pulse 1.2s ease-in-out infinite; }
 
 .tile.selected {
   box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.5);

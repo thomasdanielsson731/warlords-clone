@@ -1,4 +1,19 @@
-import { create } from 'zustand'
+// Regeneration script — batch 1: game logic layer
+const fs = require('fs');
+const path = require('path');
+const SRC = 'c:/dev/warlords/src';
+
+function write(relPath, content) {
+  const full = path.join(SRC, relPath);
+  fs.mkdirSync(path.dirname(full), { recursive: true });
+  fs.writeFileSync(full, content, 'utf8');
+  console.log('Wrote', relPath, '—', content.split('\n').length, 'lines');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// store.ts
+// ═══════════════════════════════════════════════════════════════════════════
+write('game/store.ts', `import { create } from 'zustand'
 import type { Unit, Tile, Position, Faction, City, UnitType, CombatResult, Ruin, RuinResult } from './types'
 import { UNIT_TEMPLATES, CITY_BONUSES } from './types'
 import type { TutorialState } from './tutorial'
@@ -435,7 +450,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 function bfsMoveCost(unit: Unit, target: Position, tiles: Tile[][], units: Unit[], roadSet?: Set<string>): number {
   const visited = new Map<string, number>()
   const queue: { x: number; y: number; cost: number }[] = [{ x: unit.x, y: unit.y, cost: 0 }]
-  visited.set(`${unit.x},${unit.y}`, 0)
+  visited.set(\`\${unit.x},\${unit.y}\`, 0)
   const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
 
   while (queue.length > 0) {
@@ -446,12 +461,12 @@ function bfsMoveCost(unit: Unit, target: Position, tiles: Tile[][], units: Unit[
       const nx = cur.x + dx, ny = cur.y + dy
       if (nx < 0 || nx >= tiles[0].length || ny < 0 || ny >= tiles.length) continue
 
-      const onRoad = roadSet?.has(`${nx},${ny}`) ?? false
+      const onRoad = roadSet?.has(\`\${nx},\${ny}\`) ?? false
       const moveCost = getMoveCost(tiles[ny][nx].terrain, unit.faction, onRoad)
       if (moveCost === Infinity) continue
 
       const totalCost = cur.cost + moveCost
-      const key = `${nx},${ny}`
+      const key = \`\${nx},\${ny}\`
       if (totalCost > unit.movesLeft) continue
       const prev = visited.get(key)
       if (prev !== undefined && prev <= totalCost) continue
@@ -469,3 +484,351 @@ function bfsMoveCost(unit: Unit, target: Position, tiles: Tile[][], units: Unit[
   }
   return unit.movesLeft
 }
+`);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// roads.ts
+// ═══════════════════════════════════════════════════════════════════════════
+write('game/roads.ts', `import type { Tile, City, Ruin, Position, TerrainType } from './types'
+import { MAP_WIDTH, MAP_HEIGHT, TERRAIN_MOVE_COST } from './types'
+
+export interface RoadSegment { x: number; y: number }
+
+export interface Road {
+  id: string
+  from: Position
+  to: Position
+  path: RoadSegment[]
+}
+
+export const ROAD_MOVE_COST = 1
+
+const MAX_ROAD_DISTANCE = 30
+
+export function generateRoads(tiles: Tile[][], cities: City[], ruins: Ruin[]): Road[] {
+  const roads: Road[] = []
+  const connectedPairs = new Set<string>()
+  const roadSet = new Set<string>()
+
+  const cityPositions = cities.map(c => ({ x: c.x, y: c.y, id: c.id }))
+  const ruinPositions = ruins.slice(0, 4).map(r => ({ x: r.x, y: r.y, id: r.id }))
+  const allTargets = [...cityPositions, ...ruinPositions]
+
+  for (const city of cityPositions) {
+    const sorted = allTargets
+      .filter(t => t.id !== city.id)
+      .map(t => ({ target: t, dist: Math.abs(t.x - city.x) + Math.abs(t.y - city.y) }))
+      .filter(t => t.dist <= MAX_ROAD_DISTANCE)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 3)
+
+    for (const { target } of sorted) {
+      const pairKey = [city.id, target.id].sort().join('-')
+      if (connectedPairs.has(pairKey)) continue
+      connectedPairs.add(pairKey)
+
+      const path = findRoadPath(tiles, city, target, roadSet)
+      if (path.length > 0) {
+        roads.push({ id: \`road-\${city.id}-\${target.id}\`, from: { x: city.x, y: city.y }, to: { x: target.x, y: target.y }, path })
+        for (const seg of path) roadSet.add(\`\${seg.x},\${seg.y}\`)
+      }
+    }
+  }
+  return roads
+}
+
+export function buildRoadSet(roads: Road[]): Set<string> {
+  const set = new Set<string>()
+  for (const road of roads) {
+    for (const seg of road.path) set.add(\`\${seg.x},\${seg.y}\`)
+  }
+  return set
+}
+
+export function isOnRoad(roadSet: Set<string>, x: number, y: number): boolean {
+  return roadSet.has(\`\${x},\${y}\`)
+}
+
+// ── A* pathfinding for road generation ────────────────────────────────────
+
+const ROAD_TERRAIN_COST: Record<TerrainType, number> = {
+  grass: 1, forest: 3, mountain: 6, water: Infinity,
+}
+
+interface AStarNode { x: number; y: number; g: number; f: number; parent: string | null }
+
+function findRoadPath(tiles: Tile[][], from: Position, to: Position, existingRoads: Set<string>): RoadSegment[] {
+  const w = tiles[0]?.length ?? MAP_WIDTH
+  const h = tiles.length ?? MAP_HEIGHT
+  const openSet = new Map<string, AStarNode>()
+  const closedSet = new Map<string, AStarNode>()
+
+  const startKey = \`\${from.x},\${from.y}\`
+  const endKey = \`\${to.x},\${to.y}\`
+  openSet.set(startKey, { x: from.x, y: from.y, g: 0, f: heuristic(from, to), parent: null })
+
+  const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
+
+  while (openSet.size > 0) {
+    let bestKey = '', bestF = Infinity
+    for (const [key, node] of openSet) {
+      if (node.f < bestF) { bestF = node.f; bestKey = key }
+    }
+
+    const current = openSet.get(bestKey)!
+    openSet.delete(bestKey)
+    closedSet.set(bestKey, current)
+
+    if (bestKey === endKey) return reconstructPath(closedSet, endKey, startKey)
+
+    for (const { dx, dy } of dirs) {
+      const nx = current.x + dx, ny = current.y + dy
+      if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue
+      const nKey = \`\${nx},\${ny}\`
+      if (closedSet.has(nKey)) continue
+
+      const terrain = tiles[ny][nx].terrain
+      const baseCost = ROAD_TERRAIN_COST[terrain]
+      if (baseCost === Infinity) continue
+
+      const roadBonus = existingRoads.has(nKey) ? 0.5 : baseCost
+      const tentativeG = current.g + roadBonus
+      const existing = openSet.get(nKey)
+      if (existing && existing.g <= tentativeG) continue
+
+      openSet.set(nKey, { x: nx, y: ny, g: tentativeG, f: tentativeG + heuristic({ x: nx, y: ny }, to), parent: bestKey })
+    }
+  }
+  return []
+}
+
+function heuristic(a: Position, b: Position): number {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+}
+
+function reconstructPath(closedSet: Map<string, AStarNode>, endKey: string, startKey: string): RoadSegment[] {
+  const path: RoadSegment[] = []
+  let currentKey: string | null = endKey
+  while (currentKey && currentKey !== startKey) {
+    const node = closedSet.get(currentKey)
+    if (!node) break
+    path.push({ x: node.x, y: node.y })
+    currentKey = node.parent
+  }
+  return path.reverse()
+}
+`);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// fogOfWar.ts
+// ═══════════════════════════════════════════════════════════════════════════
+write('game/fogOfWar.ts', `import type { Unit, City, Faction } from './types'
+import { MAP_WIDTH, MAP_HEIGHT } from './types'
+
+export type VisibilityState = 'hidden' | 'explored' | 'visible'
+
+const UNIT_VISION = 4
+const HERO_VISION = 6
+const CITY_VISION = 5
+
+export interface FogState {
+  data: Uint8Array
+  width: number
+  height: number
+}
+
+export function createFogState(width = MAP_WIDTH, height = MAP_HEIGHT): FogState {
+  return { data: new Uint8Array(width * height), width, height }
+}
+
+export function getVisibility(fog: FogState, x: number, y: number): VisibilityState {
+  if (x < 0 || x >= fog.width || y < 0 || y >= fog.height) return 'hidden'
+  const v = fog.data[y * fog.width + x]
+  if (v === 2) return 'visible'
+  if (v === 1) return 'explored'
+  return 'hidden'
+}
+
+export function updateFogOfWar(fog: FogState, units: Unit[], cities: City[], faction: Faction): FogState {
+  const newData = new Uint8Array(fog.data.length)
+  for (let i = 0; i < fog.data.length; i++) {
+    if (fog.data[i] >= 1) newData[i] = 1
+  }
+
+  for (const unit of units.filter(u => u.faction === faction)) {
+    const radius = unit.unitType === 'hero' ? HERO_VISION : UNIT_VISION
+    revealCircle(newData, fog.width, fog.height, unit.x, unit.y, radius)
+  }
+  for (const city of cities.filter(c => c.owner === faction)) {
+    revealCircle(newData, fog.width, fog.height, city.x, city.y, CITY_VISION)
+  }
+  return { ...fog, data: newData }
+}
+
+function revealCircle(data: Uint8Array, w: number, h: number, cx: number, cy: number, r: number): void {
+  const r2 = r * r
+  for (let y = Math.max(0, cy - r); y <= Math.min(h - 1, cy + r); y++) {
+    for (let x = Math.max(0, cx - r); x <= Math.min(w - 1, cx + r); x++) {
+      if ((x - cx) ** 2 + (y - cy) ** 2 <= r2) data[y * w + x] = 2
+    }
+  }
+}
+
+export function isVisible(fog: FogState, x: number, y: number): boolean {
+  return getVisibility(fog, x, y) === 'visible'
+}
+
+export function isExplored(fog: FogState, x: number, y: number): boolean {
+  const v = getVisibility(fog, x, y)
+  return v === 'visible' || v === 'explored'
+}
+
+export function serializeFog(fog: FogState): string {
+  const runs: number[] = []
+  let current = fog.data[0], count = 1
+  for (let i = 1; i < fog.data.length; i++) {
+    if (fog.data[i] === current) { count++ }
+    else { runs.push(current, count); current = fog.data[i]; count = 1 }
+  }
+  runs.push(current, count)
+  return JSON.stringify({ w: fog.width, h: fog.height, rle: runs })
+}
+
+export function deserializeFog(json: string): FogState {
+  const { w, h, rle } = JSON.parse(json)
+  const data = new Uint8Array(w * h)
+  let idx = 0
+  for (let i = 0; i < rle.length; i += 2) {
+    const value = rle[i], count = rle[i + 1]
+    for (let j = 0; j < count; j++) data[idx++] = value
+  }
+  return { data, width: w, height: h }
+}
+`);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// saveLoad.ts
+// ═══════════════════════════════════════════════════════════════════════════
+write('game/saveLoad.ts', `import type { Tile, Unit, City, Ruin, Faction } from './types'
+import type { Road } from './roads'
+import type { FogState } from './fogOfWar'
+import { serializeFog, deserializeFog } from './fogOfWar'
+
+const SAVE_VERSION = 1
+const SAVE_KEY = 'warlords2026_save'
+const AUTOSAVE_KEY = 'warlords2026_autosave'
+
+export interface SaveData {
+  version: number
+  timestamp: number
+  playerName: string
+  playerFaction: Faction
+  turnNumber: number
+  tiles: Tile[][]
+  units: Unit[]
+  cities: City[]
+  ruins: Ruin[]
+  roads: Road[]
+  gold: Record<Faction, number>
+  fog: string
+}
+
+export function createSaveData(
+  playerName: string, playerFaction: Faction, turnNumber: number,
+  tiles: Tile[][], units: Unit[], cities: City[], ruins: Ruin[],
+  roads: Road[], gold: Record<Faction, number>, fog: FogState
+): SaveData {
+  return {
+    version: SAVE_VERSION, timestamp: Date.now(),
+    playerName, playerFaction, turnNumber,
+    tiles, units, cities, ruins, roads, gold,
+    fog: serializeFog(fog),
+  }
+}
+
+export function saveGame(data: SaveData, slot = SAVE_KEY): boolean {
+  try { localStorage.setItem(slot, JSON.stringify(data)); return true }
+  catch { console.error('Save failed'); return false }
+}
+
+export function loadGame(slot = SAVE_KEY): SaveData | null {
+  try {
+    const json = localStorage.getItem(slot)
+    if (!json) return null
+    const data = JSON.parse(json) as SaveData
+    if (!data.version || data.version > SAVE_VERSION) return null
+    if (!data.tiles || !data.units || !data.cities) return null
+    return data
+  } catch { return null }
+}
+
+export function autoSave(data: SaveData): boolean { return saveGame(data, AUTOSAVE_KEY) }
+export function loadAutoSave(): SaveData | null { return loadGame(AUTOSAVE_KEY) }
+export function hasSave(slot = SAVE_KEY): boolean { return localStorage.getItem(slot) !== null }
+export function hasAutoSave(): boolean { return localStorage.getItem(AUTOSAVE_KEY) !== null }
+export function deleteSave(slot = SAVE_KEY): void { localStorage.removeItem(slot) }
+export function getFogFromSave(data: SaveData): FogState { return deserializeFog(data.fog) }
+`);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// tutorial.ts
+// ═══════════════════════════════════════════════════════════════════════════
+write('game/tutorial.ts', `import type { City, Ruin, Position } from './types'
+
+export interface TutorialStep {
+  id: string
+  title: string
+  description: string
+  icon: string
+  isComplete: (state: TutorialState) => boolean
+}
+
+export interface TutorialState {
+  heroSelected: boolean
+  cityCaptured: boolean
+  productionSet: boolean
+  ruinExplored: boolean
+  turnEnded: boolean
+}
+
+export const TUTORIAL_STEPS: TutorialStep[] = [
+  { id: 'select_hero', title: 'Select Your Hero', description: 'Click on Sir Galahad (★) near your capital to select him.', icon: '👆', isComplete: s => s.heroSelected },
+  { id: 'capture_city', title: 'Capture Millford', description: 'Move your hero or knight to the nearby neutral city.', icon: '🏰', isComplete: s => s.cityCaptured },
+  { id: 'set_production', title: 'Set Production', description: 'Click a city you own and choose a unit to produce.', icon: '⚒️', isComplete: s => s.productionSet },
+  { id: 'explore_ruin', title: 'Explore a Ruin', description: 'Send your hero to the glowing ruin for treasure!', icon: '🏚️', isComplete: s => s.ruinExplored },
+  { id: 'end_turn', title: 'End Your Turn', description: 'Click "End Turn" to advance. Enemies will move!', icon: '⏭️', isComplete: s => s.turnEnded },
+]
+
+export const TUTORIAL_TOPICS = [
+  { title: 'Heroes', icon: '⭐', text: 'Heroes explore ruins, gain XP, and carry artifacts. Protect them!' },
+  { title: 'Cities', icon: '🏰', text: 'Capture cities for gold and unit production. Each has a unique bonus.' },
+  { title: 'Production', icon: '⚒️', text: 'Click a city to produce militia, archers, or knights each turn.' },
+  { title: 'End Turn', icon: '⏭️', text: 'Press End Turn when done. Enemies move simultaneously.' },
+]
+
+export function findNearestNeutralCity(cities: City[], pos: Position): City | null {
+  let best: City | null = null, bestDist = Infinity
+  for (const c of cities) {
+    if (c.owner !== null) continue
+    const d = Math.abs(c.x - pos.x) + Math.abs(c.y - pos.y)
+    if (d < bestDist) { bestDist = d; best = c }
+  }
+  return best
+}
+
+export function findNearestRuin(ruins: Ruin[], pos: Position): Ruin | null {
+  let best: Ruin | null = null, bestDist = Infinity
+  for (const r of ruins) {
+    if (r.explored) continue
+    const d = Math.abs(r.x - pos.x) + Math.abs(r.y - pos.y)
+    if (d < bestDist) { bestDist = d; best = r }
+  }
+  return best
+}
+
+export function findPlayerCapital(cities: City[]): City | null {
+  return cities.find(c => c.owner === 'player' && c.isCapital) ?? null
+}
+`);
+
+console.log('\\n=== Batch 1 complete: game logic layer ===');

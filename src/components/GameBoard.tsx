@@ -32,15 +32,10 @@ export default function GameBoard() {
       <div className="game-info">
         <h1>Warlords 2026</h1>
         <div className="status">
-          <p>
-            Turn: <span className="turn-number">{turnNumber}</span>
-          </p>
+          <p>Turn: <span className="turn-number">{turnNumber}</span></p>
           <p>
             Faction:{' '}
-            <span
-              className="faction-label"
-              style={{ backgroundColor: FACTION_COLORS[currentFaction] }}
-            >
+            <span className="faction-label" style={{ backgroundColor: FACTION_COLORS[currentFaction] }}>
               {currentFaction.toUpperCase()}
             </span>
           </p>
@@ -67,12 +62,8 @@ export default function GameBoard() {
               </>
             )}
             <p>Strength: {selectedUnit.strength}</p>
-            <p>
-              Moves: {selectedUnit.movesLeft}/{selectedUnit.movesPerTurn}
-            </p>
-            <p>
-              Position: ({selectedUnit.x}, {selectedUnit.y})
-            </p>
+            <p>Moves: {selectedUnit.movesLeft}/{selectedUnit.movesPerTurn}</p>
+            <p>Position: ({selectedUnit.x}, {selectedUnit.y})</p>
             {selectedUnit.unitType === 'hero' && selectedUnit.inventory && selectedUnit.inventory.length > 0 && (
               <div className="hero-inventory">
                 <p className="inventory-label">Inventory:</p>
@@ -100,9 +91,7 @@ export default function GameBoard() {
             </h3>
             <p>Owner: {selectedCity.owner ?? 'Neutral'}</p>
             <p>Defense: {selectedCity.defense}</p>
-            <p>
-              Position: ({selectedCity.x}, {selectedCity.y})
-            </p>
+            <p>Position: ({selectedCity.x}, {selectedCity.y})</p>
             {CITY_BONUSES[selectedCity.id] && (
               <div className="city-bonus-info">
                 <span className="city-bonus-icon">{CITY_BONUSES[selectedCity.id].icon}</span>
@@ -116,12 +105,7 @@ export default function GameBoard() {
               <p className="production-status">
                 Producing: {selectedCity.producing} ({selectedCity.turnsLeft} turn
                 {selectedCity.turnsLeft !== 1 ? 's' : ''})
-                <button
-                  className="cancel-production"
-                  onClick={() => setProduction(selectedCity.id, null)}
-                >
-                  ✕
-                </button>
+                <button className="cancel-production" onClick={() => setProduction(selectedCity.id, null)}>✕</button>
               </p>
             )}
             {!selectedCity.producing && selectedCity.owner === currentFaction && (
@@ -134,11 +118,7 @@ export default function GameBoard() {
                   if (currentFaction === 'orcs' && type === 'militia') turns = 0
                   if (currentFaction === 'player' && type === 'knight') str += 1
                   return (
-                    <button
-                      key={type}
-                      className="produce-btn"
-                      onClick={() => setProduction(selectedCity.id, type)}
-                    >
+                    <button key={type} className="produce-btn" onClick={() => setProduction(selectedCity.id, type)}>
                       {type} <span className="produce-stats">STR {str} · {turns}T</span>
                     </button>
                   )
@@ -161,10 +141,9 @@ export default function GameBoard() {
           ))}
         </div>
 
-        <button className="end-turn-button" onClick={endTurn}>
-          End Turn
-        </button>
+        <button className="end-turn-button" onClick={endTurn}>End Turn</button>
       </div>
+
       <div className="map-container">
         <GameScene />
         <KingdomOverview />
@@ -178,10 +157,7 @@ export default function GameBoard() {
             <div className="combat-sides">
               <div className={`combat-side${combatResult.attackerWins ? ' winner' : ' loser'}`}>
                 <span className="combat-label">Attacker</span>
-                <span
-                  className="combat-faction"
-                  style={{ color: FACTION_COLORS[combatResult.attacker.faction] }}
-                >
+                <span className="combat-faction" style={{ color: FACTION_COLORS[combatResult.attacker.faction] }}>
                   {combatResult.attacker.faction}
                 </span>
                 <span className="combat-unit">
@@ -194,10 +170,7 @@ export default function GameBoard() {
               <div className="combat-vs">VS</div>
               <div className={`combat-side${!combatResult.attackerWins ? ' winner' : ' loser'}`}>
                 <span className="combat-label">Defender</span>
-                <span
-                  className="combat-faction"
-                  style={{ color: FACTION_COLORS[combatResult.defender.faction] }}
-                >
+                <span className="combat-faction" style={{ color: FACTION_COLORS[combatResult.defender.faction] }}>
                   {combatResult.defender.faction}
                 </span>
                 <span className="combat-unit">
@@ -216,9 +189,7 @@ export default function GameBoard() {
                 <span className="xp-gained"> (+{combatResult.xpGained} XP)</span>
               )}
             </p>
-            <button className="combat-dismiss" onClick={dismissCombat}>
-              OK
-            </button>
+            <button className="combat-dismiss" onClick={dismissCombat}>OK</button>
           </div>
         </div>
       )}
@@ -236,9 +207,7 @@ export default function GameBoard() {
               {ruinResult.type === 'nothing' && '💨 '}
               {ruinResult.description}
             </p>
-            <button className="combat-dismiss" onClick={dismissRuinResult}>
-              OK
-            </button>
+            <button className="combat-dismiss" onClick={dismissRuinResult}>OK</button>
           </div>
         </div>
       )}
@@ -251,9 +220,7 @@ export default function GameBoard() {
               {victor.toUpperCase()} conquers the realm!
             </p>
             <p className="victory-turn">Achieved on turn {turnNumber}</p>
-            <button className="combat-dismiss" onClick={() => window.location.reload()}>
-              New Game
-            </button>
+            <button className="combat-dismiss" onClick={() => window.location.reload()}>New Game</button>
           </div>
         </div>
       )}

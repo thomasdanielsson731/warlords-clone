@@ -23,12 +23,7 @@ export default function MapView() {
   const clickTile = useGameStore((s) => s.clickTile)
 
   return (
-    <div
-      className="map"
-      style={{
-        gridTemplateColumns: `repeat(${MAP_WIDTH}, ${TILE_SIZE}px)`,
-      }}
-    >
+    <div className="map" style={{ gridTemplateColumns: `repeat(${MAP_WIDTH}, ${TILE_SIZE}px)` }}>
       {Array.from({ length: MAP_HEIGHT * MAP_WIDTH }).map((_, i) => {
         const x = i % MAP_WIDTH
         const y = Math.floor(i / MAP_WIDTH)
@@ -55,31 +50,20 @@ export default function MapView() {
             key={`${x}-${y}`}
             className={className}
             style={{
-              width: TILE_SIZE,
-              height: TILE_SIZE,
-              backgroundColor: isInRange
-                ? '#5ab85a'
-                : isSelected || isCitySelected
-                  ? '#6ad06a'
-                  : terrainStyle.bg,
+              width: TILE_SIZE, height: TILE_SIZE,
+              backgroundColor: isInRange ? '#5ab85a'
+                : isSelected || isCitySelected ? '#6ad06a'
+                : terrainStyle.bg,
             }}
             onClick={() => clickTile(x, y)}
           >
             {city && (
-              <div
-                className="city"
-                style={{
-                  borderColor: cityColor!,
-                  backgroundColor: cityColor! + '33',
-                }}
-              >
+              <div className="city" style={{ borderColor: cityColor!, backgroundColor: cityColor! + '33' }}>
                 🏰
               </div>
             )}
             {!city && ruin && (
-              <div className={`ruin${ruin.explored ? ' explored' : ''}`}>
-                🏚️
-              </div>
+              <div className={`ruin${ruin.explored ? ' explored' : ''}`}>🏚️</div>
             )}
             {unit && (
               <div

@@ -39,7 +39,6 @@ function RuinModel({ x, y, explored }: { x: number; y: number; explored: boolean
         <cylinderGeometry args={[0.035, 0.045, 0.2, 5]} />
         <meshStandardMaterial color={stoneColor} roughness={0.9} />
       </mesh>
-      {/* Third broken pillar - shorter */}
       <mesh position={[0.15, 0.06, -0.1]} castShadow>
         <cylinderGeometry args={[0.03, 0.04, 0.12, 5]} />
         <meshStandardMaterial color={stoneColor} roughness={0.9} />
@@ -49,7 +48,7 @@ function RuinModel({ x, y, explored }: { x: number; y: number; explored: boolean
         <boxGeometry args={[0.28, 0.04, 0.05]} />
         <meshStandardMaterial color={darkStone} roughness={0.9} />
       </mesh>
-      {/* Fallen pillar segment */}
+      {/* Fallen pillar */}
       <mesh position={[-0.05, 0.04, 0.12]} rotation={[0, 0.5, Math.PI / 2]}>
         <cylinderGeometry args={[0.025, 0.03, 0.12, 5]} />
         <meshStandardMaterial color={darkStone} roughness={0.9} />
@@ -61,7 +60,7 @@ function RuinModel({ x, y, explored }: { x: number; y: number; explored: boolean
           <meshStandardMaterial color="#6a5a4a" roughness={0.95} />
         </mesh>
       ))}
-      {/* Overgrown moss patches */}
+      {/* Overgrown moss */}
       {!explored && (
         <>
           <mesh position={[-0.08, 0.01, -0.04]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -83,12 +82,10 @@ function RuinModel({ x, y, explored }: { x: number; y: number; explored: boolean
             <meshStandardMaterial color="#ffdd44" emissive="#ffaa22" emissiveIntensity={0.8} transparent opacity={0.8} />
           </mesh>
           <pointLight ref={lightRef} position={[0, 0.5, 0]} color="#ffaa22" intensity={0.5} distance={2} decay={2} />
-          {/* Ground glow circle */}
           <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <ringGeometry args={[0.12, 0.22, 16]} />
             <meshBasicMaterial color="#ffaa22" transparent opacity={0.12} depthWrite={false} />
           </mesh>
-          {/* Inner glow */}
           <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <circleGeometry args={[0.12, 12]} />
             <meshBasicMaterial color="#ffdd44" transparent opacity={0.06} depthWrite={false} />
@@ -117,56 +114,36 @@ function SceneContent() {
 
   return (
     <>
-      {/* ══ Lighting — warm golden sun with cool fill ══ */}
+      {/* Lighting */}
       <ambientLight intensity={0.3} color="#c8b8a0" />
-
-      {/* Main sun – warm golden, high angle */}
       <directionalLight
-        position={[25, 32, 22]}
-        intensity={1.0}
-        color="#ffe0b0"
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-near={0.5}
-        shadow-camera-far={90}
-        shadow-camera-left={-35}
-        shadow-camera-right={35}
-        shadow-camera-top={35}
-        shadow-camera-bottom={-35}
+        position={[25, 32, 22]} intensity={1.0} color="#ffe0b0"
+        castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048}
+        shadow-camera-near={0.5} shadow-camera-far={90}
+        shadow-camera-left={-35} shadow-camera-right={35}
+        shadow-camera-top={35} shadow-camera-bottom={-35}
         shadow-bias={-0.001}
       />
-
-      {/* Warm rim light from opposite angle */}
       <directionalLight position={[-15, 20, -15]} intensity={0.15} color="#ffccaa" />
-
-      {/* Cool fill from above for depth */}
       <directionalLight position={[-8, 22, -10]} intensity={0.2} color="#7080b0" />
-
-      {/* Hemisphere: warm sky + dark earth bounce */}
       <hemisphereLight args={['#c0b0a0', '#2a3a1a', 0.3]} />
 
-      {/* ══ Atmosphere ══ */}
+      {/* Atmosphere */}
       <fog attach="fog" args={['#2a2535', 20, 65]} />
       <color attach="background" args={['#1a1525']} />
 
-      {/* ══ Ground plane ══ */}
-      <mesh
-        position={[MAP_WIDTH / 2 - 0.5, -0.02, MAP_HEIGHT / 2 - 0.5]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-      >
+      {/* Ground plane */}
+      <mesh position={[MAP_WIDTH / 2 - 0.5, -0.02, MAP_HEIGHT / 2 - 0.5]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[MAP_WIDTH + 8, MAP_HEIGHT + 8]} />
         <meshStandardMaterial color="#151510" roughness={1} />
       </mesh>
 
-      {/* ══ Terrain ══ */}
+      {/* Terrain */}
       {tiles.map((row, y) =>
         row.map((tile, x) => (
           <TerrainTile
             key={`${x}-${y}`}
-            terrain={tile.terrain}
-            x={x} y={y}
+            terrain={tile.terrain} x={x} y={y}
             highlighted={highlightSet.has(`${x},${y}`)}
             hovered={hoveredTile?.x === x && hoveredTile?.y === y}
             onClick={() => clickTile(x, y)}
@@ -176,21 +153,20 @@ function SceneContent() {
         ))
       )}
 
-      {/* ══ Ruins ══ */}
+      {/* Ruins */}
       {ruins.map((ruin) => (
         <RuinModel key={ruin.id} x={ruin.x} y={ruin.y} explored={ruin.explored} />
       ))}
 
-      {/* ══ Cities ══ */}
+      {/* Cities */}
       {cities.map((city) => (
         <CityModel key={city.id} city={city} selected={false} onClick={() => clickTile(city.x, city.y)} />
       ))}
 
-      {/* ══ Units ══ */}
+      {/* Units */}
       {units.map((unit) => (
         <UnitModel
-          key={unit.id}
-          unit={unit}
+          key={unit.id} unit={unit}
           selected={unit.id === selectedUnitId}
           onClick={() => {
             if (unit.faction === currentFaction) selectUnit(unit.id)
@@ -199,18 +175,13 @@ function SceneContent() {
         />
       ))}
 
-      {/* ══ Strategic overlays ══ */}
       <StrategicOverlays />
-
-      {/* ══ Objective markers ══ */}
       <ObjectiveMarkers />
-
       <CameraController />
     </>
   )
 }
 
-// ── Canvas with enhanced renderer ───────────────────────────────────────────
 export default function GameScene() {
   return (
     <div style={{ width: '100%', height: '100%' }}>

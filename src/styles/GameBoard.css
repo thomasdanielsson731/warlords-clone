@@ -1,5 +1,4 @@
 /* ===== Premium Dark Fantasy Theme ===== */
-/* Color palette: charcoal/dark brown base, gold accents, muted blue highlights */
 
 .game-board {
   display: flex;
@@ -21,7 +20,6 @@
   width: 240px;
   flex-shrink: 0;
   overflow-y: auto;
-  /* Ornate inner shadow */
   box-shadow: inset -8px 0 16px rgba(0, 0, 0, 0.4);
 }
 
@@ -67,6 +65,12 @@
 .gold-amount {
   color: #c8a84e;
   font-weight: bold;
+}
+
+.gold-income {
+  font-size: 11px;
+  color: #908878;
+  margin-left: 4px;
 }
 
 .faction-bonus {
@@ -243,6 +247,42 @@
   box-shadow: 0 0 4px currentColor;
 }
 
+.capital-badge {
+  font-size: 10px;
+  color: #ffd700;
+  margin-left: 6px;
+  font-weight: normal;
+}
+
+.city-bonus-info {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px 8px;
+  margin-top: 6px;
+  background: rgba(200, 168, 78, 0.08);
+  border: 1px solid rgba(200, 168, 78, 0.2);
+  border-radius: 4px;
+}
+
+.city-bonus-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.city-bonus-text strong {
+  display: block;
+  font-size: 11px;
+  color: #c8a84e;
+}
+
+.city-bonus-text p {
+  margin: 0;
+  font-size: 10px;
+  color: #908878;
+}
+
 .faction-units {
   flex: 1;
   overflow-y: auto;
@@ -330,9 +370,7 @@
   padding: 24px 28px;
   text-align: center;
   min-width: 360px;
-  box-shadow:
-    0 0 20px rgba(200, 168, 78, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 20px rgba(200, 168, 78, 0.15), 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .combat-modal h2 {
@@ -434,9 +472,7 @@
   font-size: 13px;
 }
 
-.ruin-modal h2 {
-  color: #c8a84e;
-}
+.ruin-modal h2 { color: #c8a84e; }
 
 .ruin-hero {
   font-size: 14px;
@@ -470,47 +506,4 @@
   font-size: 13px;
   color: #807868;
   margin: 0 0 20px;
-}
-
-/* ===== City Bonus Info ===== */
-.city-bonus-info {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  padding: 6px 8px;
-  margin-top: 6px;
-  background: rgba(200, 168, 78, 0.08);
-  border: 1px solid rgba(200, 168, 78, 0.2);
-  border-radius: 4px;
-}
-
-.city-bonus-icon {
-  font-size: 18px;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-.city-bonus-text strong {
-  display: block;
-  font-size: 11px;
-  color: #c8a84e;
-}
-
-.city-bonus-text p {
-  margin: 0;
-  font-size: 10px;
-  color: #908878;
-}
-
-.capital-badge {
-  font-size: 10px;
-  color: #ffd700;
-  margin-left: 6px;
-  font-weight: normal;
-}
-
-.gold-income {
-  font-size: 11px;
-  color: #908878;
-  margin-left: 4px;
 }

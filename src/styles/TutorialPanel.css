@@ -1,4 +1,4 @@
-/* ===== Tutorial Panel — floating overlay ===== */
+/* ===== Tutorial Panel ===== */
 .tutorial-panel {
   position: absolute;
   top: 12px;
@@ -48,7 +48,6 @@
   color: #c06060;
 }
 
-/* Current objective */
 .tutorial-objective,
 .tutorial-complete {
   display: flex;
@@ -93,7 +92,6 @@
   animation: none;
 }
 
-/* Progress dots */
 .tutorial-progress {
   display: flex;
   gap: 6px;
@@ -128,7 +126,6 @@
   50% { transform: scale(1.3); }
 }
 
-/* Quick reference topics */
 .tutorial-topics {
   display: flex;
   flex-direction: column;

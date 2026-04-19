@@ -39,12 +39,8 @@ export default function KingdomOverview() {
     const totalStrength = fUnits.reduce((sum, u) => sum + u.strength, 0)
     const heroCount = fUnits.filter((u) => u.unitType === 'hero').length
     return {
-      faction,
-      cityCount: fCities.length,
-      unitCount: fUnits.length,
-      totalStrength,
-      heroCount,
-      gold: gold[faction],
+      faction, cityCount: fCities.length, unitCount: fUnits.length,
+      totalStrength, heroCount, gold: gold[faction],
       power: totalStrength + fCities.length * 5 + heroCount * 8,
     }
   }).sort((a, b) => b.power - a.power)
@@ -127,14 +123,9 @@ export default function KingdomOverview() {
 
                 <div className="ko-card-progress">
                   <div className="ko-progress-bar">
-                    <div
-                      className="ko-progress-fill"
-                      style={{ width: `${progress * 100}%`, backgroundColor: color }}
-                    />
+                    <div className="ko-progress-fill" style={{ width: `${progress * 100}%`, backgroundColor: color }} />
                   </div>
-                  <span className="ko-progress-text">
-                    {s.cityCount}/{citiesToWin} to win
-                  </span>
+                  <span className="ko-progress-text">{s.cityCount}/{citiesToWin} to win</span>
                 </div>
               </div>
             )
