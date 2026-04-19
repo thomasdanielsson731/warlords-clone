@@ -1,6 +1,6 @@
 import { useGameStore } from '../game/store'
 import type { TerrainType } from '../game/types'
-import { FACTION_COLORS, MAP_WIDTH, MAP_HEIGHT } from '../game/types'
+import { FACTION_COLORS, NEUTRAL_COLOR, MAP_WIDTH, MAP_HEIGHT } from '../game/types'
 import '../styles/Map.css'
 
 const TILE_SIZE = 32
@@ -15,7 +15,10 @@ const TERRAIN_STYLES: Record<TerrainType, { bg: string; label: string }> = {
 export default function MapView() {
   const tiles = useGameStore((s) => s.tiles)
   const units = useGameStore((s) => s.units)
+  const cities = useGameStore((s) => s.cities)
+  const ruins = useGameStore((s) => s.ruins)
   const selectedUnitId = useGameStore((s) => s.selectedUnitId)
+  const selectedCityId = useGameStore((s) => s.selectedCityId)
   const movementRange = useGameStore((s) => s.movementRange)
   const clickTile = useGameStore((s) => s.clickTile)
 
@@ -33,12 +36,19 @@ export default function MapView() {
         const terrainStyle = TERRAIN_STYLES[tile.terrain]
 
         const unit = units.find((u) => u.x === x && u.y === y)
+        const city = cities.find((c) => c.x === x && c.y === y)
+        const ruin = ruins.find((r) => r.x === x && r.y === y)
         const isSelected = unit?.id === selectedUnitId
+        const isCitySelected = city?.id === selectedCityId
         const isInRange = movementRange.some((p) => p.x === x && p.y === y)
 
         let className = 'tile'
-        if (isSelected) className += ' selected'
+        if (isSelected || isCitySelected) className += ' selected'
         else if (isInRange) className += ' highlighted'
+
+        const cityColor = city
+          ? city.owner ? FACTION_COLORS[city.owner] : NEUTRAL_COLOR
+          : null
 
         return (
           <div
@@ -49,24 +59,41 @@ export default function MapView() {
               height: TILE_SIZE,
               backgroundColor: isInRange
                 ? '#5ab85a'
-                : isSelected
+                : isSelected || isCitySelected
                   ? '#6ad06a'
                   : terrainStyle.bg,
             }}
             onClick={() => clickTile(x, y)}
           >
-            {unit ? (
+            {city && (
               <div
-                className="unit"
+                className="city"
+                style={{
+                  borderColor: cityColor!,
+                  backgroundColor: cityColor! + '33',
+                }}
+              >
+                🏰
+              </div>
+            )}
+            {!city && ruin && (
+              <div className={`ruin${ruin.explored ? ' explored' : ''}`}>
+                🏚️
+              </div>
+            )}
+            {unit && (
+              <div
+                className={`unit${city || ruin ? ' unit-on-city' : ''}${unit.unitType === 'hero' ? ' hero' : ''}`}
                 style={{
                   backgroundColor: FACTION_COLORS[unit.faction],
                   borderColor: isSelected ? '#fff' : FACTION_COLORS[unit.faction],
                   opacity: unit.movesLeft > 0 ? 1 : 0.5,
                 }}
               >
-                {unit.strength}
+                {unit.unitType === 'hero' ? '★' : unit.strength}
               </div>
-            ) : (
+            )}
+            {!unit && !city && !ruin && (
               <span className="terrain-icon">{terrainStyle.label}</span>
             )}
           </div>

@@ -48,7 +48,30 @@
   font-size: 14px;
   padding: 3px 8px;
   border-radius: 4px;
-  color: white;
+
+}
+
+.faction-bonus {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: rgba(233, 200, 69, 0.08);
+  border: 1px solid rgba(233, 200, 69, 0.25);
+  border-radius: 4px;
+}
+
+.bonus-label {
+  font-weight: bold;
+  font-size: 12px;
+  color: #e9c845;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bonus-desc {
+  font-size: 11px;
+  color: #ccc;
 }
 
 .unit-info {
@@ -64,9 +87,124 @@
   color: #e94560;
 }
 
+.unit-info .hero-inventory {
+  margin-top: 6px;
+  border-top: 1px solid #0f3460;
+  padding-top: 6px;
+}
+
+.inventory-label {
+  font-size: 11px;
+  color: #aaa;
+  margin: 0 0 4px;
+}
+
+.inventory-item {
+  display: block;
+  font-size: 11px;
+  color: #e9c845;
+  padding: 2px 0;
+}
+
+.hero-entry {
+  color: #e9c845;
+  border-color: rgba(233, 200, 69, 0.3) !important;
+}
+
 .unit-info p {
   margin: 2px 0;
   font-size: 13px;
+}
+
+.city-info {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid #0f3460;
+}
+
+.city-info h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #e9c845;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.city-info p {
+  margin: 2px 0;
+  font-size: 13px;
+}
+
+.production-status {
+  color: #66ccff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cancel-production {
+  background: none;
+  border: 1px solid #e94560;
+  color: #e94560;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 4px;
+  border-radius: 3px;
+  line-height: 1;
+}
+
+.cancel-production:hover {
+  background: #e94560;
+  color: white;
+}
+
+.production-buttons {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.production-label {
+  margin: 0 0 2px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.produce-btn {
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: capitalize;
+  color: white;
+  background: rgba(15, 52, 96, 0.8);
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.produce-btn:hover {
+  background: #0f3460;
+  border-color: #66ccff;
+}
+
+.produce-stats {
+  font-weight: normal;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.city-owner-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .faction-units {
@@ -122,4 +260,137 @@
   align-items: center;
   justify-content: center;
   overflow: auto;
+}
+
+/* Combat Modal */
+.combat-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.combat-modal {
+  background: #16213e;
+  border: 2px solid #e94560;
+  border-radius: 12px;
+  padding: 24px 32px;
+  text-align: center;
+  min-width: 360px;
+  box-shadow: 0 8px 32px rgba(233, 69, 96, 0.3);
+}
+
+.combat-modal h2 {
+  margin: 0 0 16px;
+  font-size: 22px;
+  color: #e94560;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.combat-sides {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.combat-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+}
+
+.combat-side.winner {
+  border-color: #66ff66;
+  background: rgba(102, 255, 102, 0.08);
+}
+
+.combat-side.loser {
+  border-color: #cc3333;
+  background: rgba(204, 51, 51, 0.08);
+  opacity: 0.7;
+}
+
+.combat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #aaa;
+}
+
+.combat-faction {
+  font-weight: bold;
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.combat-unit {
+  font-size: 13px;
+  text-transform: capitalize;
+  color: #ccc;
+}
+
+.combat-calc {
+  font-size: 13px;
+  color: #e0e0e0;
+  margin-top: 4px;
+}
+
+.combat-vs {
+  font-size: 18px;
+  font-weight: bold;
+  color: #e94560;
+}
+
+.combat-outcome {
+  font-size: 16px;
+  font-weight: bold;
+  color: #66ff66;
+  margin: 8px 0 16px;
+}
+
+.combat-dismiss {
+  padding: 8px 32px;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #e94560, #c23152);
+  border: 2px solid #e94560;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.combat-dismiss:hover {
+  background: linear-gradient(135deg, #ff5577, #e94560);
+  box-shadow: 0 4px 12px rgba(233, 69, 96, 0.4);
+}
+
+.xp-gained {
+  color: #e9c845;
+  font-size: 14px;
+}
+
+.ruin-modal h2 {
+  color: #e9c845;
+}
+
+.ruin-hero {
+  font-size: 16px;
+  font-weight: bold;
+  color: #e9c845;
+  margin: 8px 0;
+}
+
+.ruin-reward {
+  font-size: 15px;
+  color: #66ff66;
+  margin: 12px 0 16px;
 }
