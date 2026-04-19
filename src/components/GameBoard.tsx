@@ -1,7 +1,7 @@
 import { useGameStore } from '../game/store'
 import { FACTION_COLORS, NEUTRAL_COLOR, UNIT_TEMPLATES, FACTION_BONUSES } from '../game/types'
 import type { UnitType } from '../game/types'
-import MapView from './MapView'
+import GameScene from '../scene/GameScene'
 import '../styles/GameBoard.css'
 
 export default function GameBoard() {
@@ -27,7 +27,7 @@ export default function GameBoard() {
   return (
     <div className="game-board">
       <div className="game-info">
-        <h1>Warlords</h1>
+        <h1>Warlords 2026</h1>
         <div className="status">
           <p>
             Turn: <span className="turn-number">{turnNumber}</span>
@@ -149,7 +149,7 @@ export default function GameBoard() {
         </button>
       </div>
       <div className="map-container">
-        <MapView />
+        <GameScene />
       </div>
 
       {combatResult && (

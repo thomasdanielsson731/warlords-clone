@@ -19,6 +19,7 @@ interface GameStore {
   turnNumber: number
   combatResult: CombatResult | null
   ruinResult: RuinResult | null
+  hoveredTile: Position | null
 
   selectUnit: (id: string | null) => void
   moveUnit: (x: number, y: number) => void
@@ -27,6 +28,7 @@ interface GameStore {
   setProduction: (cityId: string, unitType: UnitType | null) => void
   dismissCombat: () => void
   dismissRuinResult: () => void
+  setHoveredTile: (pos: Position | null) => void
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -42,6 +44,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   turnNumber: 1,
   combatResult: null,
   ruinResult: null,
+  hoveredTile: null,
+
+  setHoveredTile: (pos) => set({ hoveredTile: pos }),
 
   selectUnit: (id) => {
     if (id === null) {
