@@ -86,58 +86,86 @@ export function generateMap(): Tile[][] {
   }
 
   const rand = seededRandom(42)
+
+  // Continental shape inspired by Warlords II — two main landmasses
+  // connected by a narrow isthmus, surrounded by ocean
+  const LAND: number[][] = [
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,0,0],
+    [0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,1,1,1,1,0,0,1,1,1,0,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,0],
+    [0,0,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,0,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,0],
+    [0,0,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,0,0],
+    [0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  ]
+
+  // Mountain zones
+  const isMountainZone = (x: number, y: number): boolean =>
+    (y >= 4 && y <= 5 && x >= 6 && x <= 8) ||
+    (y >= 3 && y <= 4 && x >= 14 && x <= 16) ||
+    (y >= 7 && y <= 8 && x >= 8 && x <= 10) ||
+    (y >= 13 && y <= 14 && x >= 9 && x <= 11)
+
+  // Forest zones
+  const isForestZone = (x: number, y: number): boolean =>
+    (y >= 2 && y <= 4 && x >= 2 && x <= 5) ||
+    (y >= 1 && y <= 3 && x >= 12 && x <= 14) ||
+    (y >= 5 && y <= 7 && x >= 4 && x <= 7) ||
+    (y >= 14 && y <= 17 && x >= 2 && x <= 5) ||
+    (y >= 14 && y <= 17 && x >= 14 && x <= 17) ||
+    (y >= 12 && y <= 14 && x >= 5 && x <= 8)
+
   const tiles: Tile[][] = []
 
   for (let y = 0; y < MAP_HEIGHT; y++) {
     const row: Tile[] = []
     for (let x = 0; x < MAP_WIDTH; x++) {
+      if (LAND[y][x] === 0) {
+        row.push({ terrain: 'water', x, y })
+        continue
+      }
       const r = rand()
       let terrain: TerrainType = 'grass'
-      if (r < 0.15) terrain = 'forest'
-      else if (r < 0.22) terrain = 'mountain'
-      else if (r < 0.28) terrain = 'water'
+      if (isMountainZone(x, y)) {
+        terrain = r < 0.55 ? 'mountain' : r < 0.75 ? 'forest' : 'grass'
+      } else if (isForestZone(x, y)) {
+        terrain = r < 0.50 ? 'forest' : r < 0.58 ? 'mountain' : 'grass'
+      } else {
+        terrain = r < 0.05 ? 'mountain' : r < 0.15 ? 'forest' : 'grass'
+      }
       row.push({ terrain, x, y })
     }
     tiles.push(row)
   }
 
-  // Ensure starting positions are grass
-  const starts = [
-    [2, 2],
-    [17, 17],
-    [2, 17],
-    [17, 2],
+  // Ensure cities, ruins, and starting positions are walkable grass
+  const clearPositions = [
+    // Faction cities + surroundings
+    [3,2],[2,1],[3,1],[4,1],[2,2],[4,2],[2,3],[3,3],[4,3],
+    [16,2],[15,1],[16,1],[17,1],[15,2],[17,2],[15,3],[16,3],[17,3],
+    [3,15],[2,14],[3,14],[4,14],[2,15],[4,15],[2,16],[3,16],[4,16],
+    [16,15],[15,14],[16,14],[17,14],[15,15],[17,15],[15,16],[16,16],[17,16],
+    // Neutral cities
+    [5,1],[14,1],[7,3],[12,3],[4,5],[14,4],[9,7],[6,10],[13,10],[6,13],[14,13],[9,14],
+    // Ruins
+    [5,3],[14,5],[8,8],[5,11],[13,11],[10,14],
   ]
-  for (const [sx, sy] of starts) {
-    tiles[sy][sx].terrain = 'grass'
-    // Clear adjacent tiles too
-    for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
-      const nx = sx + dx
-      const ny = sy + dy
-      if (nx >= 0 && nx < MAP_WIDTH && ny >= 0 && ny < MAP_HEIGHT) {
-        if (tiles[ny][nx].terrain === 'water') {
-          tiles[ny][nx].terrain = 'grass'
-        }
-      }
-    }
-  }
-
-  // Ensure all city positions are grass
-  const cityPositions = [
-    [6,3],[13,4],[4,8],[15,9],[9,6],[10,13],
-    [7,11],[12,10],[5,15],[14,16],[10,2],[9,17],
-  ]
-  for (const [cx, cy] of cityPositions) {
-    tiles[cy][cx].terrain = 'grass'
-  }
-
-  // Ensure all ruin positions are walkable
-  const ruinPositions = [
-    [5, 5], [14, 6], [8, 9], [11, 14], [3, 13], [16, 12],
-  ]
-  for (const [rx, ry] of ruinPositions) {
-    if (tiles[ry][rx].terrain === 'water') {
-      tiles[ry][rx].terrain = 'grass'
+  for (const [cx, cy] of clearPositions) {
+    if (cx >= 0 && cx < MAP_WIDTH && cy >= 0 && cy < MAP_HEIGHT && LAND[cy][cx] === 1) {
+      tiles[cy][cx].terrain = 'grass'
     }
   }
 
@@ -147,40 +175,40 @@ export function generateMap(): Tile[][] {
 export function createInitialUnits(): Unit[] {
   return [
     // Heroes — one per faction
-    { id: 'h1', faction: 'player', unitType: 'hero', x: 2, y: 3, movesLeft: 5, movesPerTurn: 5, strength: 4, name: 'Sir Galahad', experience: 0, level: 1, inventory: [] },
-    { id: 'h2', faction: 'orcs', unitType: 'hero', x: 17, y: 16, movesLeft: 5, movesPerTurn: 5, strength: 4, name: 'Warchief Grom', experience: 0, level: 1, inventory: [] },
-    { id: 'h3', faction: 'elves', unitType: 'hero', x: 3, y: 17, movesLeft: 5, movesPerTurn: 5, strength: 4, name: 'Araniel', experience: 0, level: 1, inventory: [] },
-    { id: 'h4', faction: 'bane', unitType: 'hero', x: 16, y: 2, movesLeft: 5, movesPerTurn: 5, strength: 4, name: 'Lord Malachar', experience: 0, level: 1, inventory: [] },
+    { id: 'h1', faction: 'player', unitType: 'hero', x: 4, y: 3, movesLeft: 5, movesPerTurn: 5, strength: 4, name: 'Sir Galahad', experience: 0, level: 1, inventory: [] },
+    { id: 'h2', faction: 'orcs', unitType: 'hero', x: 15, y: 16, movesLeft: 5, movesPerTurn: 5, strength: 4, name: 'Warchief Grom', experience: 0, level: 1, inventory: [] },
+    { id: 'h3', faction: 'elves', unitType: 'hero', x: 4, y: 16, movesLeft: 5, movesPerTurn: 5, strength: 4, name: 'Araniel', experience: 0, level: 1, inventory: [] },
+    { id: 'h4', faction: 'bane', unitType: 'hero', x: 15, y: 3, movesLeft: 5, movesPerTurn: 5, strength: 4, name: 'Lord Malachar', experience: 0, level: 1, inventory: [] },
     // Regular units
-    { id: 'u1', faction: 'player', unitType: 'knight', x: 2, y: 2, movesLeft: 4, movesPerTurn: 4, strength: 6 },
-    { id: 'u2', faction: 'player', unitType: 'militia', x: 3, y: 2, movesLeft: 3, movesPerTurn: 3, strength: 2 },
-    { id: 'u3', faction: 'orcs', unitType: 'knight', x: 17, y: 17, movesLeft: 4, movesPerTurn: 4, strength: 5 },
-    { id: 'u4', faction: 'orcs', unitType: 'militia', x: 16, y: 17, movesLeft: 3, movesPerTurn: 3, strength: 2 },
-    { id: 'u5', faction: 'elves', unitType: 'archer', x: 2, y: 17, movesLeft: 3, movesPerTurn: 3, strength: 3 },
+    { id: 'u1', faction: 'player', unitType: 'knight', x: 3, y: 2, movesLeft: 4, movesPerTurn: 4, strength: 6 },
+    { id: 'u2', faction: 'player', unitType: 'militia', x: 2, y: 2, movesLeft: 3, movesPerTurn: 3, strength: 2 },
+    { id: 'u3', faction: 'orcs', unitType: 'knight', x: 16, y: 15, movesLeft: 4, movesPerTurn: 4, strength: 5 },
+    { id: 'u4', faction: 'orcs', unitType: 'militia', x: 17, y: 16, movesLeft: 3, movesPerTurn: 3, strength: 2 },
+    { id: 'u5', faction: 'elves', unitType: 'archer', x: 2, y: 15, movesLeft: 3, movesPerTurn: 3, strength: 3 },
     { id: 'u6', faction: 'bane', unitType: 'archer', x: 17, y: 2, movesLeft: 3, movesPerTurn: 3, strength: 3 },
   ]
 }
 
 export function createInitialCities(): City[] {
   return [
-    // Faction starting cities (near starting units)
-    { id: 'c1', name: 'Stormhold', x: 2, y: 2, owner: 'player', defense: 3, producing: null, turnsLeft: 0 },
-    { id: 'c2', name: 'Gashnak', x: 17, y: 17, owner: 'orcs', defense: 3, producing: null, turnsLeft: 0 },
-    { id: 'c3', name: 'Silvanthas', x: 2, y: 17, owner: 'elves', defense: 3, producing: null, turnsLeft: 0 },
-    { id: 'c4', name: 'Shadowfane', x: 17, y: 2, owner: 'bane', defense: 3, producing: null, turnsLeft: 0 },
-    // Neutral cities spread across the map
-    { id: 'c5', name: 'Millford', x: 6, y: 3, owner: null, defense: 2, producing: null, turnsLeft: 0 },
-    { id: 'c6', name: 'Thornwall', x: 13, y: 4, owner: null, defense: 2, producing: null, turnsLeft: 0 },
-    { id: 'c7', name: 'Dawnhaven', x: 4, y: 8, owner: null, defense: 2, producing: null, turnsLeft: 0 },
-    { id: 'c8', name: 'Ironkeep', x: 15, y: 9, owner: null, defense: 2, producing: null, turnsLeft: 0 },
-    { id: 'c9', name: 'Blackmoor', x: 9, y: 6, owner: null, defense: 2, producing: null, turnsLeft: 0 },
-    { id: 'c10', name: 'Greywatch', x: 10, y: 13, owner: null, defense: 2, producing: null, turnsLeft: 0 },
-    { id: 'c11', name: 'Lakeshire', x: 7, y: 11, owner: null, defense: 1, producing: null, turnsLeft: 0 },
-    { id: 'c12', name: 'Ashford', x: 12, y: 10, owner: null, defense: 1, producing: null, turnsLeft: 0 },
-    { id: 'c13', name: 'Mistfall', x: 5, y: 15, owner: null, defense: 1, producing: null, turnsLeft: 0 },
-    { id: 'c14', name: 'Dustvale', x: 14, y: 16, owner: null, defense: 1, producing: null, turnsLeft: 0 },
-    { id: 'c15', name: 'Goldcrest', x: 10, y: 2, owner: null, defense: 2, producing: null, turnsLeft: 0 },
-    { id: 'c16', name: 'Wolfgate', x: 9, y: 17, owner: null, defense: 2, producing: null, turnsLeft: 0 },
+    // Faction starting cities
+    { id: 'c1', name: 'Stormhold', x: 3, y: 2, owner: 'player', defense: 3, producing: null, turnsLeft: 0 },
+    { id: 'c2', name: 'Gashnak', x: 16, y: 15, owner: 'orcs', defense: 3, producing: null, turnsLeft: 0 },
+    { id: 'c3', name: 'Silvanthas', x: 3, y: 15, owner: 'elves', defense: 3, producing: null, turnsLeft: 0 },
+    { id: 'c4', name: 'Shadowfane', x: 16, y: 2, owner: 'bane', defense: 3, producing: null, turnsLeft: 0 },
+    // Neutral cities spread across the continents
+    { id: 'c5', name: 'Millford', x: 5, y: 1, owner: null, defense: 2, producing: null, turnsLeft: 0 },
+    { id: 'c6', name: 'Goldcrest', x: 14, y: 1, owner: null, defense: 2, producing: null, turnsLeft: 0 },
+    { id: 'c7', name: 'Thornwall', x: 7, y: 3, owner: null, defense: 2, producing: null, turnsLeft: 0 },
+    { id: 'c8', name: 'Dawnhaven', x: 12, y: 3, owner: null, defense: 2, producing: null, turnsLeft: 0 },
+    { id: 'c9', name: 'Blackmoor', x: 4, y: 5, owner: null, defense: 2, producing: null, turnsLeft: 0 },
+    { id: 'c10', name: 'Ironkeep', x: 14, y: 4, owner: null, defense: 2, producing: null, turnsLeft: 0 },
+    { id: 'c11', name: 'Ashford', x: 9, y: 7, owner: null, defense: 2, producing: null, turnsLeft: 0 },
+    { id: 'c12', name: 'Lakeshire', x: 6, y: 10, owner: null, defense: 1, producing: null, turnsLeft: 0 },
+    { id: 'c13', name: 'Greywatch', x: 13, y: 10, owner: null, defense: 1, producing: null, turnsLeft: 0 },
+    { id: 'c14', name: 'Wolfgate', x: 6, y: 13, owner: null, defense: 1, producing: null, turnsLeft: 0 },
+    { id: 'c15', name: 'Mistfall', x: 14, y: 13, owner: null, defense: 1, producing: null, turnsLeft: 0 },
+    { id: 'c16', name: 'Dustvale', x: 9, y: 14, owner: null, defense: 2, producing: null, turnsLeft: 0 },
   ]
 }
 
@@ -276,12 +304,12 @@ export function resolveCombat(
 
 export function createInitialRuins(): Ruin[] {
   return [
-    { id: 'r1', x: 5, y: 5, explored: false },
-    { id: 'r2', x: 14, y: 6, explored: false },
-    { id: 'r3', x: 8, y: 9, explored: false },
-    { id: 'r4', x: 11, y: 14, explored: false },
-    { id: 'r5', x: 3, y: 13, explored: false },
-    { id: 'r6', x: 16, y: 12, explored: false },
+    { id: 'r1', x: 5, y: 3, explored: false },
+    { id: 'r2', x: 14, y: 5, explored: false },
+    { id: 'r3', x: 8, y: 8, explored: false },
+    { id: 'r4', x: 5, y: 11, explored: false },
+    { id: 'r5', x: 13, y: 11, explored: false },
+    { id: 'r6', x: 10, y: 14, explored: false },
   ]
 }
 
