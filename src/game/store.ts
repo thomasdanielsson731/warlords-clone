@@ -1,21 +1,17 @@
 import { create } from 'zustand'
-import { Unit } from './types'
+import type { Unit } from './types'
 
-interface GameState {
-  currentFaction: string
-  selectedUnitId: string | null
+interface GameStore {
   units: Unit[]
-  selectUnit: (id: string | null) => void
+  selectedUnitId: string | null
+  selectUnit: (id: string) => void
 }
 
-export const useGameStore = create<GameState>((set) => ({
-  currentFaction: 'player',
-  selectedUnitId: null,
+export const useGameStore = create<GameStore>((set) => ({
   units: [
-    { id: 'u1', faction: 'player', x: 2, y: 2, moves: 3 },
-    { id: 'u2', faction: 'orcs', x: 10, y: 10, moves: 3 },
-    { id: 'u3', faction: 'elves', x: 15, y: 4, moves: 3 },
-    { id: 'u4', faction: 'bane', x: 5, y: 15, moves: 3 },
+    { id: '1', faction: 'player', x: 5, y: 5, moves: 3 },
+    { id: '2', faction: 'orcs', x: 15, y: 15, moves: 3 },
   ],
-  selectUnit: (id) => set({ selectedUnitId: id }),
+  selectedUnitId: null,
+  selectUnit: (id: string) => set({ selectedUnitId: id }),
 }))

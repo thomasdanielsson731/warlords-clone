@@ -1,4 +1,5 @@
 import { useGameStore } from '../game/store'
+import type { Unit } from '../game/types'
 
 const size = 20
 const tileSize = 32
@@ -18,7 +19,7 @@ export default function MapView() {
         const x = i % size
         const y = Math.floor(i / size)
 
-        const unit = units.find((u) => u.x === x && u.y === y)
+        const unit = units.find((u: Unit) => u.x === x && u.y === y)
         const selected = unit?.id === selectedUnitId
 
         return (
