@@ -61,6 +61,7 @@ export interface City {
   defense: number
   producing: UnitType | null
   turnsLeft: number
+  isCapital?: boolean
 }
 
 export const FACTION_COLORS: Record<Faction, string> = {
@@ -114,4 +115,52 @@ export interface CombatResult {
   defender: { unitType: UnitType; faction: Faction; strength: number; roll: number; total: number; cityBonus: number; name?: string }
   attackerWins: boolean
   xpGained?: number
+}
+
+// ── City Bonus System ─────────────────────────────────────────────────────
+export type CityBonusType = 'gold' | 'production_speed' | 'unit_strength' | 'defense' | 'special_unit'
+
+export interface CityBonus {
+  type: CityBonusType
+  label: string
+  description: string
+  icon: string
+  value: number
+  /** For special_unit: the unit type that gets bonus or is unlocked */
+  unitType?: UnitType
+  /** Strategic importance: 1 (minor) to 3 (critical) — affects visual glow */
+  importance: 1 | 2 | 3
+}
+
+export const CITY_BONUSES: Record<string, CityBonus> = {
+  // Tutorial path neutrals — easy to understand bonuses
+  c5: { type: 'gold', label: 'Grain Market', description: '+3 gold per turn', icon: '🌾', value: 3, importance: 1 },
+  c6: { type: 'defense', label: 'Fortified Walls', description: '+2 city defense', icon: '🏰', value: 2, importance: 2 },
+  // Mid-map contest cities
+  c7: { type: 'gold', label: 'Gold Mine', description: '+5 gold per turn', icon: '💰', value: 5, importance: 3 },
+  c8: { type: 'special_unit', label: 'Ranger Lodge', description: 'Archers gain +1 STR', icon: '🏹', value: 1, unitType: 'archer', importance: 2 },
+  c9: { type: 'special_unit', label: 'Iron Forge', description: 'Knights gain +2 STR', icon: '⚔️', value: 2, unitType: 'knight', importance: 3 },
+  c10: { type: 'production_speed', label: 'War Stables', description: 'Units produced 1 turn faster', icon: '🐎', value: 1, importance: 2 },
+  c11: { type: 'gold', label: 'Trade Hub', description: '+4 gold per turn, +1 defense', icon: '⚖️', value: 4, importance: 3 },
+  c12: { type: 'unit_strength', label: 'War Academy', description: 'All units gain +1 STR', icon: '📖', value: 1, importance: 3 },
+  c13: { type: 'gold', label: 'Lake Trade', description: '+2 gold per turn', icon: '🐟', value: 2, importance: 1 },
+  c14: { type: 'defense', label: 'Watchtower', description: '+1 city defense', icon: '🗼', value: 1, importance: 1 },
+  c15: { type: 'special_unit', label: 'Mystic Market', description: 'Archers gain +1 STR', icon: '🔮', value: 1, unitType: 'archer', importance: 1 },
+  c16: { type: 'production_speed', label: 'Supply Depot', description: 'Units produced 1 turn faster', icon: '📦', value: 1, importance: 2 },
+}
+
+// Hero portrait mapping
+export const HERO_PORTRAITS: Record<Faction, string[]> = {
+  player: ['human_hero_1.png', 'human_hero_2.png', 'human_hero_3.png'],
+  orcs: ['orc_hero_1.png', 'orc_hero_2.png', 'orc_hero_3.png'],
+  elves: ['elf_hero_1.png', 'elf_hero_2.png', 'elf_hero_3.png'],
+  bane: ['bane_hero_1.png', 'bane_hero_2.png', 'bane_hero_3.png'],
+}
+
+// Faction display info
+export const FACTION_DISPLAY: Record<Faction, { name: string; icon: string }> = {
+  player: { name: 'Kingdom of Stormhold', icon: '🦁' },
+  orcs: { name: 'Orcish Horde', icon: '🐗' },
+  elves: { name: 'Elvish Dominion', icon: '🦌' },
+  bane: { name: 'Cult of Bane', icon: '🐉' },
 }

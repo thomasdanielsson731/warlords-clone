@@ -5,7 +5,9 @@ export function isValidPosition(pos: Position): boolean {
   return pos.x >= 0 && pos.x < MAP_WIDTH && pos.y >= 0 && pos.y < MAP_HEIGHT
 }
 
-export function getMoveCost(terrain: TerrainType, faction?: Faction): number {
+export function getMoveCost(terrain: TerrainType, faction?: Faction, onRoad?: boolean): number {
+  // Roads always cost 1 move (regardless of terrain)
+  if (onRoad) return 1
   const base = TERRAIN_MOVE_COST[terrain]
   // Elves: forest costs 1 instead of 2
   if (faction === 'elves' && terrain === 'forest') return 1
@@ -16,7 +18,8 @@ export function getMovementRange(
   unit: Unit,
   tiles: Tile[][],
   units: Unit[],
-  ruins: Ruin[] = []
+  ruins: Ruin[] = [],
+  roadSet?: Set<string>
 ): Position[] {
   const reachable: Position[] = []
   const visited = new Map<string, number>()
@@ -39,7 +42,8 @@ export function getMovementRange(
       const ny = current.y + dy
       if (!isValidPosition({ x: nx, y: ny })) continue
 
-      const cost = getMoveCost(tiles[ny][nx].terrain, unit.faction)
+      const onRoad = roadSet?.has(`${nx},${ny}`) ?? false
+      const cost = getMoveCost(tiles[ny][nx].terrain, unit.faction, onRoad)
       const remaining = current.remaining - cost
       if (remaining < 0) continue
 
@@ -213,10 +217,10 @@ export function createInitialUnits(): Unit[] {
 export function createInitialCities(): City[] {
   return [
     // Faction capitals (corners)
-    { id: 'c1', name: 'Stormhold', x: 5, y: 34, owner: 'player', defense: 3, producing: null, turnsLeft: 0 },
-    { id: 'c2', name: 'Gashnak', x: 34, y: 5, owner: 'orcs', defense: 3, producing: null, turnsLeft: 0 },
-    { id: 'c3', name: 'Silvanthas', x: 34, y: 34, owner: 'elves', defense: 3, producing: null, turnsLeft: 0 },
-    { id: 'c4', name: 'Shadowfane', x: 5, y: 5, owner: 'bane', defense: 3, producing: null, turnsLeft: 0 },
+    { id: 'c1', name: 'Stormhold', x: 5, y: 34, owner: 'player', defense: 3, producing: null, turnsLeft: 0, isCapital: true },
+    { id: 'c2', name: 'Gashnak', x: 34, y: 5, owner: 'orcs', defense: 3, producing: null, turnsLeft: 0, isCapital: true },
+    { id: 'c3', name: 'Silvanthas', x: 34, y: 34, owner: 'elves', defense: 3, producing: null, turnsLeft: 0, isCapital: true },
+    { id: 'c4', name: 'Shadowfane', x: 5, y: 5, owner: 'bane', defense: 3, producing: null, turnsLeft: 0, isCapital: true },
     // Tutorial path neutrals (near player)
     { id: 'c5', name: 'Millford', x: 9, y: 31, owner: null, defense: 1, producing: null, turnsLeft: 0 },
     { id: 'c6', name: 'Thornwall', x: 17, y: 24, owner: null, defense: 2, producing: null, turnsLeft: 0 },

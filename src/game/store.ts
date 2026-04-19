@@ -1,16 +1,29 @@
 import { create } from 'zustand'
 import type { Unit, Tile, Position, Faction, City, UnitType, CombatResult, Ruin, RuinResult } from './types'
-import { UNIT_TEMPLATES } from './types'
+import { UNIT_TEMPLATES, CITY_BONUSES } from './types'
+import type { TutorialState } from './tutorial'
 import { getMoveCost } from './gamelogic'
 import { generateMap, createInitialUnits, getMovementRange, createInitialCities, findSpawnPosition, createUnit, resolveCombat, createInitialRuins, exploreRuin, grantXp, checkVictory, runAiTurn } from './gamelogic'
+import { generateRoads, buildRoadSet } from './roads'
+import type { Road } from './roads'
+import { createFogState, updateFogOfWar } from './fogOfWar'
+import type { FogState } from './fogOfWar'
+import { createSaveData, saveGame, loadGame, autoSave, hasSave, hasAutoSave, getFogFromSave } from './saveLoad'
 
 const FACTIONS: Faction[] = ['player', 'orcs', 'elves', 'bane']
 
 interface GameStore {
+  // Game state
+  gamePhase: 'menu' | 'playing'
+  playerName: string
+  playerFaction: Faction
   tiles: Tile[][]
   units: Unit[]
   cities: City[]
   ruins: Ruin[]
+  roads: Road[]
+  roadSet: Set<string>
+  fog: FogState
   gold: Record<Faction, number>
   selectedUnitId: string | null
   selectedCityId: string | null
@@ -21,7 +34,13 @@ interface GameStore {
   ruinResult: RuinResult | null
   hoveredTile: Position | null
   victor: Faction | null
+  saveMessage: string | null
+  tutorialStep: number
+  tutorialDismissed: boolean
+  tutorial: TutorialState
 
+  // Actions
+  startGame: (playerName: string, faction: Faction) => void
   selectUnit: (id: string | null) => void
   moveUnit: (x: number, y: number) => void
   endTurn: () => void
@@ -30,13 +49,37 @@ interface GameStore {
   dismissCombat: () => void
   dismissRuinResult: () => void
   setHoveredTile: (pos: Position | null) => void
+  saveCurrentGame: () => void
+  loadSavedGame: () => boolean
+  dismissSaveMessage: () => void
+  advanceTutorial: () => void
+  dismissTutorial: () => void
 }
 
+// Generate initial world
+const initialTiles = generateMap()
+const initialCities = createInitialCities()
+const initialRuins = createInitialRuins()
+const initialRoads = generateRoads(initialTiles, initialCities, initialRuins)
+const initialRoadSet = buildRoadSet(initialRoads)
+const initialFog = updateFogOfWar(
+  createFogState(),
+  createInitialUnits(),
+  initialCities,
+  'player'
+)
+
 export const useGameStore = create<GameStore>((set, get) => ({
-  tiles: generateMap(),
+  gamePhase: 'menu',
+  playerName: 'Player',
+  playerFaction: 'player' as Faction,
+  tiles: initialTiles,
   units: createInitialUnits(),
-  cities: createInitialCities(),
-  ruins: createInitialRuins(),
+  cities: initialCities,
+  ruins: initialRuins,
+  roads: initialRoads,
+  roadSet: initialRoadSet,
+  fog: initialFog,
   gold: { player: 0, orcs: 0, elves: 0, bane: 0 },
   selectedUnitId: null,
   selectedCityId: null,
@@ -47,22 +90,117 @@ export const useGameStore = create<GameStore>((set, get) => ({
   ruinResult: null,
   hoveredTile: null,
   victor: null,
+  saveMessage: null,
+  tutorialStep: 0,
+  tutorialDismissed: false,
+  tutorial: { heroSelected: false, cityCaptured: false, productionSet: false, ruinExplored: false, turnEnded: false },
 
   setHoveredTile: (pos) => set({ hoveredTile: pos }),
+
+  startGame: (playerName, faction) => {
+    const tiles = generateMap()
+    const cities = createInitialCities()
+    const ruins = createInitialRuins()
+    const units = createInitialUnits()
+    const roads = generateRoads(tiles, cities, ruins)
+    const roadSet = buildRoadSet(roads)
+    const fog = updateFogOfWar(createFogState(), units, cities, faction)
+    set({
+      gamePhase: 'playing',
+      playerName,
+      playerFaction: faction,
+      tiles,
+      cities,
+      ruins,
+      units,
+      roads,
+      roadSet,
+      fog,
+      gold: { player: 0, orcs: 0, elves: 0, bane: 0 },
+      selectedUnitId: null,
+      selectedCityId: null,
+      movementRange: [],
+      currentFaction: 'player',
+      turnNumber: 1,
+      combatResult: null,
+      ruinResult: null,
+      hoveredTile: null,
+      victor: null,
+    })
+  },
+
+  saveCurrentGame: () => {
+    const s = get()
+    const data = createSaveData(
+      s.playerName, s.playerFaction, s.turnNumber,
+      s.tiles, s.units, s.cities, s.ruins, s.roads, s.gold, s.fog
+    )
+    const ok = saveGame(data)
+    set({ saveMessage: ok ? 'Game saved!' : 'Save failed — storage may be full' })
+    setTimeout(() => set({ saveMessage: null }), 2000)
+  },
+
+  loadSavedGame: () => {
+    const data = loadGame()
+    if (!data) return false
+    const fog = getFogFromSave(data)
+    const roadSet = buildRoadSet(data.roads)
+    set({
+      gamePhase: 'playing',
+      playerName: data.playerName,
+      playerFaction: data.playerFaction,
+      turnNumber: data.turnNumber,
+      tiles: data.tiles,
+      units: data.units,
+      cities: data.cities,
+      ruins: data.ruins,
+      roads: data.roads,
+      roadSet,
+      fog,
+      gold: data.gold,
+      selectedUnitId: null,
+      selectedCityId: null,
+      movementRange: [],
+      currentFaction: 'player',
+      combatResult: null,
+      ruinResult: null,
+      hoveredTile: null,
+      victor: null,
+    })
+    return true
+  },
+
+  dismissSaveMessage: () => set({ saveMessage: null }),
+
+  advanceTutorial: () => {
+    const { tutorialStep } = get()
+    if (tutorialStep < 5) set({ tutorialStep: tutorialStep + 1 })
+  },
+
+  dismissTutorial: () => set({ tutorialDismissed: true }),
 
   selectUnit: (id) => {
     if (id === null) {
       set({ selectedUnitId: null, selectedCityId: null, movementRange: [] })
       return
     }
-    const { units, tiles, currentFaction, ruins } = get()
+    const { units, tiles, currentFaction, ruins, roadSet } = get()
     const unit = units.find((u) => u.id === id)
     if (!unit || unit.faction !== currentFaction) return
+
+    // Tutorial: track hero selection
+    if (unit.unitType === 'hero') {
+      const { tutorial, tutorialStep } = get()
+      if (!tutorial.heroSelected) {
+        set({ tutorial: { ...tutorial, heroSelected: true }, tutorialStep: Math.max(tutorialStep, 1) })
+      }
+    }
+
     if (unit.movesLeft <= 0) {
       set({ selectedUnitId: id, selectedCityId: null, movementRange: [] })
       return
     }
-    const range = getMovementRange(unit, tiles, units, ruins)
+    const range = getMovementRange(unit, tiles, units, ruins, roadSet)
     set({ selectedUnitId: id, selectedCityId: null, movementRange: range })
   },
 
@@ -132,7 +270,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     // Calculate actual move cost via BFS path
-    const cost = bfsMoveCost(unit, { x, y }, tiles, units)
+    const { roadSet: rs } = get()
+    const cost = bfsMoveCost(unit, { x, y }, tiles, units, rs)
 
     let updatedUnits = units.map((u) =>
       u.id === selectedUnitId
@@ -183,13 +322,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Recompute movement range for the moved unit
     const movedUnit = updatedUnits.find((u) => u.id === selectedUnitId)
-    const { ruins: currentRuins } = get()
+    const { ruins: currentRuins, roadSet: currentRoadSet } = get()
     const newRange =
       movedUnit && movedUnit.movesLeft > 0
-        ? getMovementRange(movedUnit, tiles, updatedUnits, currentRuins)
+        ? getMovementRange(movedUnit, tiles, updatedUnits, currentRuins, currentRoadSet)
         : []
 
-    set({ units: updatedUnits, cities: updatedCities, movementRange: newRange, ruinResult })
+    // Update fog of war after movement
+    const { fog, playerFaction } = get()
+    const newFog = updateFogOfWar(fog, updatedUnits, updatedCities, playerFaction)
+
+    // Tutorial tracking
+    const { tutorial, tutorialStep } = get()
+    const tutUpdates: Partial<TutorialState> = {}
+    const cityWasCaptured = updatedCities.some((c) => c.owner === unit.faction && cities.find((oc) => oc.id === c.id && oc.owner !== unit.faction))
+    if (cityWasCaptured && !tutorial.cityCaptured) tutUpdates.cityCaptured = true
+    if (ruinResult && !tutorial.ruinExplored) tutUpdates.ruinExplored = true
+    const newTut = Object.keys(tutUpdates).length > 0 ? { ...tutorial, ...tutUpdates } : tutorial
+    let newStep = tutorialStep
+    if (tutUpdates.cityCaptured) newStep = Math.max(newStep, 2)
+    if (tutUpdates.ruinExplored) newStep = Math.max(newStep, 4)
+
+    set({ units: updatedUnits, cities: updatedCities, movementRange: newRange, ruinResult, fog: newFog, tutorial: newTut, tutorialStep: newStep })
   },
 
   endTurn: () => {
@@ -206,6 +360,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const pos = findSpawnPosition(c, newUnits, tiles)
         if (pos) {
           const spawned = createUnit(currentFaction, c.producing, pos)
+          // Apply city bonuses to spawned unit
+          const bonus = CITY_BONUSES[c.id]
+          if (bonus?.type === 'unit_strength') spawned.strength += bonus.value
+          if (bonus?.type === 'special_unit' && bonus.unitType === c.producing) spawned.strength += bonus.value
           newUnits = [...newUnits, spawned]
         }
         // Continuous production: restart with same unit type
@@ -263,6 +421,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Check victory
     const victor = checkVictory(aiCities)
 
+    // Update fog of war
+    const { fog, playerFaction, playerName, tiles: currentTiles, ruins: currentRuins, roads: currentRoads, gold: currentGold } = get()
+    const newFog = updateFogOfWar(fog, finalUnits, aiCities, playerFaction)
+
+    // City bonus gold income: each faction earns gold from owned cities with gold bonuses
+    const updatedGold = { ...currentGold }
+    for (const faction of FACTIONS) {
+      // Base income: 1 gold per city
+      const ownedCities = aiCities.filter((c) => c.owner === faction)
+      updatedGold[faction] += ownedCities.length
+      // Bonus income from city bonuses
+      for (const c of ownedCities) {
+        const bonus = CITY_BONUSES[c.id]
+        if (bonus?.type === 'gold') updatedGold[faction] += bonus.value
+      }
+    }
+
+    // Tutorial: track turn end
+    const { tutorial, tutorialStep } = get()
+    const tutTurnEnd = !tutorial.turnEnded ? { ...tutorial, turnEnded: true } : tutorial
+    const newTutStep = !tutorial.turnEnded ? Math.max(tutorialStep, 5) : tutorialStep
+
     set({
       currentFaction: 'player',
       turnNumber: newTurn,
@@ -272,7 +452,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       selectedCityId: null,
       movementRange: [],
       victor,
+      fog: newFog,
+      gold: updatedGold,
+      tutorial: tutTurnEnd,
+      tutorialStep: newTutStep,
     })
+
+    // Autosave at end of turn
+    const s = get()
+    const saveData = createSaveData(
+      s.playerName, s.playerFaction, s.turnNumber,
+      s.tiles, s.units, s.cities, s.ruins, s.roads, s.gold, s.fog
+    )
+    autoSave(saveData)
   },
 
   clickTile: (x, y) => {
@@ -317,10 +509,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const updatedCities = cities.map((c) => {
       if (c.id !== cityId) return c
-      const turns = unitType ? UNIT_TEMPLATES[unitType].productionTurns : 0
+      let turns = unitType ? UNIT_TEMPLATES[unitType].productionTurns : 0
+      // City bonus: production_speed reduces turns by bonus value (min 1)
+      if (unitType && turns > 1) {
+        const bonus = CITY_BONUSES[c.id]
+        if (bonus?.type === 'production_speed') turns = Math.max(1, turns - bonus.value)
+      }
       return { ...c, producing: unitType, turnsLeft: turns }
     })
-    set({ cities: updatedCities })
+
+    // Tutorial: track production set
+    const { tutorial, tutorialStep } = get()
+    if (!tutorial.productionSet) {
+      set({ cities: updatedCities, tutorial: { ...tutorial, productionSet: true }, tutorialStep: Math.max(tutorialStep, 3) })
+    } else {
+      set({ cities: updatedCities })
+    }
   },
 
   dismissCombat: () => {
@@ -336,7 +540,8 @@ function bfsMoveCost(
   unit: Unit,
   target: Position,
   tiles: Tile[][],
-  units: Unit[]
+  units: Unit[],
+  roadSet?: Set<string>
 ): number {
   const visited = new Map<string, number>()
   const queue: { x: number; y: number; cost: number }[] = [
@@ -361,7 +566,8 @@ function bfsMoveCost(
       if (nx < 0 || nx >= tiles[0].length || ny < 0 || ny >= tiles.length)
         continue
 
-      const moveCost = getMoveCost(tiles[ny][nx].terrain, unit.faction)
+      const onRoad = roadSet?.has(`${nx},${ny}`) ?? false
+      const moveCost = getMoveCost(tiles[ny][nx].terrain, unit.faction, onRoad)
       if (moveCost === Infinity) continue
 
       const totalCost = current.cost + moveCost

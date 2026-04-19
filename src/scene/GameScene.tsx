@@ -7,6 +7,8 @@ import TerrainTile from './TerrainTile'
 import CityModel from './CityModel'
 import UnitModel from './UnitModel'
 import CameraController from './CameraController'
+import ObjectiveMarkers from './ObjectiveMarkers'
+import StrategicOverlays from './StrategicOverlays'
 
 // ── Animated magical ruin ───────────────────────────────────────────────────
 function RuinModel({ x, y, explored }: { x: number; y: number; explored: boolean }) {
@@ -196,6 +198,12 @@ function SceneContent() {
           }}
         />
       ))}
+
+      {/* ══ Strategic overlays ══ */}
+      <StrategicOverlays />
+
+      {/* ══ Objective markers ══ */}
+      <ObjectiveMarkers />
 
       <CameraController />
     </>

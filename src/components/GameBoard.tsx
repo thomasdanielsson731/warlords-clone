@@ -1,8 +1,9 @@
 import { useGameStore } from '../game/store'
-import { FACTION_COLORS, NEUTRAL_COLOR, UNIT_TEMPLATES, FACTION_BONUSES } from '../game/types'
+import { FACTION_COLORS, NEUTRAL_COLOR, UNIT_TEMPLATES, FACTION_BONUSES, CITY_BONUSES } from '../game/types'
 import type { UnitType } from '../game/types'
 import GameScene from '../scene/GameScene'
 import KingdomOverview from './KingdomOverview'
+import TutorialPanel from './TutorialPanel'
 import '../styles/GameBoard.css'
 
 export default function GameBoard() {
@@ -45,6 +46,10 @@ export default function GameBoard() {
           </p>
           <p>
             Gold: <span className="gold-amount">💰 {gold[currentFaction]}</span>
+            <span className="gold-income"> (+{factionCities.length + factionCities.reduce((sum, c) => {
+              const b = CITY_BONUSES[c.id]
+              return sum + (b?.type === 'gold' ? b.value : 0)
+            }, 0)}/turn)</span>
           </p>
           <div className="faction-bonus">
             <span className="bonus-label">{FACTION_BONUSES[currentFaction].label}</span>
@@ -91,12 +96,22 @@ export default function GameBoard() {
                 }}
               />
               {selectedCity.name}
+              {selectedCity.isCapital && <span className="capital-badge">★ Capital</span>}
             </h3>
             <p>Owner: {selectedCity.owner ?? 'Neutral'}</p>
             <p>Defense: {selectedCity.defense}</p>
             <p>
               Position: ({selectedCity.x}, {selectedCity.y})
             </p>
+            {CITY_BONUSES[selectedCity.id] && (
+              <div className="city-bonus-info">
+                <span className="city-bonus-icon">{CITY_BONUSES[selectedCity.id].icon}</span>
+                <div className="city-bonus-text">
+                  <strong>{CITY_BONUSES[selectedCity.id].label}</strong>
+                  <p>{CITY_BONUSES[selectedCity.id].description}</p>
+                </div>
+              </div>
+            )}
             {selectedCity.producing && (
               <p className="production-status">
                 Producing: {selectedCity.producing} ({selectedCity.turnsLeft} turn
@@ -153,6 +168,7 @@ export default function GameBoard() {
       <div className="map-container">
         <GameScene />
         <KingdomOverview />
+        <TutorialPanel />
       </div>
 
       {combatResult && (
